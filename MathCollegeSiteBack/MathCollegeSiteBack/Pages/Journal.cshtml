@@ -1,0 +1,25 @@
+@page
+@{
+    ViewData["Title"] = "Интересные факты";
+}
+
+<div class="journal-page">
+    <header class="section-page-header">
+        <span class="section-kicker">ЖУРНАЛ СЛУЧАЙНОСТЕЙ</span>
+        <h1>Математика умеет удивлять</h1>
+        <p>Короткие истории о вероятности, парадоксах и вещах, которые случаются вокруг нас.</p>
+    </header>
+    <div class="journal-grid journal-page-grid">
+        <article class="journal-card journal-story"><span class="journal-number">01 / ПАРАДОКС</span><span class="journal-symbol">🎂</span><h2>Почему в группе совпадают дни рождения?</h2><p>В группе из 23 человек шанс, что хотя бы у двоих совпадёт день рождения, уже больше 50%. Кажется мало? Мы сравниваем не одного человека со всеми, а каждую пару между собой.</p><div class="story-foot"><span class="journal-tag">Комбинаторика · 2 минуты</span><a href="/Themes">Узнать о сочетаниях →</a></div></article>
+        <article class="journal-card journal-story"><span class="journal-number">02 / ЭКСПЕРИМЕНТ</span><span class="journal-symbol">🪙</span><h2>Большие числа не обещают ровно половину</h2><p>Длинная серия бросков обычно делает долю орлов ближе к ½, но не заставляет её стать ровно 0,5. Случайность колеблется — просто её относительное влияние уменьшается.</p><div class="story-foot"><span class="journal-tag">Вероятность · 2 минуты</span><a href="/Lab">Проверить в лаборатории →</a></div></article>
+        <article class="journal-card journal-story"><span class="journal-number">03 / ЛОГИКА</span><span class="journal-symbol">🚪</span><h2>В задаче с дверями стоит менять выбор</h2><p>Ведущий знает, где приз, и всегда открывает пустую дверь. После этого смена выбора даёт шанс ⅔, а оставленный выбор — ⅓. Проверь это в игре с Квантом.</p><div class="story-foot"><span class="journal-tag">Условная вероятность · 3 минуты</span><a href="/Lab">Сыграть с дверями →</a></div></article>
+        <article class="journal-card journal-story"><span class="journal-number">04 / НАБЛЮДЕНИЕ</span><span class="journal-symbol">🌧️</span><h2>Вероятность дождя — не точный таймер</h2><p>Прогноз 30% не означает, что дождь займёт 30% дня. Это оценка того, как часто при похожих условиях дождь шёл в похожих местах.</p><div class="story-foot"><span class="journal-tag">Статистика · 2 минуты</span><a href="/Themes">Открыть темы курса →</a></div></article>
+        <article class="journal-card journal-story"><span class="journal-number">05 / ДАННЫЕ</span><span class="journal-symbol">📊</span><h2>Среднее может обмануть</h2><p>Если у четырёх человек по 40 тысяч, а у одного — 400 тысяч, средняя зарплата в группе будет 112 тысяч. Медиана лучше покажет типичное значение.</p><div class="story-foot"><span class="journal-tag">Описательная статистика · 2 минуты</span><a href="/Practice">Потренироваться →</a></div></article>
+        <article class="journal-card journal-story journal-quant-story"><span class="journal-number">06 / ОТ КВАНТА</span><span class="journal-symbol">🐈</span><h2>Любопытство — тоже хорошая стратегия</h2><p>Если результат удивил, не спеши объявлять его невозможным. Задай вопрос, повтори опыт и посмотри, какие правила могли породить именно такой результат.</p><div class="story-foot"><span class="journal-tag">Совет напарника</span><button type="button" data-quant-say="Договорились! Сначала наблюдаем, потом строим модель, а вывод делаем после проверки.">Спросить Кванта →</button></div></article>
+    </div>
+</div>
+@section Scripts {
+<script>
+document.querySelectorAll('[data-quant-say]').forEach(button => button.addEventListener('click', () => window.VariqCat?.say(button.dataset.quantSay, 'happy')));
+</script>
+}

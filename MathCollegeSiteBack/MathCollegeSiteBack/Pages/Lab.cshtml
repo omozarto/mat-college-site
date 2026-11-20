@@ -1,0 +1,110 @@
+@page
+@{
+    ViewData["Title"] = "Игры и лаборатория";
+}
+
+<div class="lab-page">
+    <header class="section-page-header">
+        <span class="section-kicker">ИНТЕРАКТИВНАЯ ЛАБОРАТОРИЯ</span>
+        <h1>Проверим теорию на практике</h1>
+        <p>Запускай эксперименты, меняй параметры и смотри, как меняются результаты.</p>
+    </header>
+
+    <section class="lab-section standalone-lab" aria-labelledby="labTitle">
+        <div class="lab-heading"><div><span class="section-kicker">ЭКСПЕРИМЕНТЫ</span><h2 id="labTitle">Поиграй со случайностью</h2></div><span class="lab-orbit-mark" aria-hidden="true">✳</span></div>
+        <div class="lab-grid">
+            <article class="lab-card coin-card">
+                <div class="lab-card-title"><span class="lab-icon coin-icon">◉</span><div><h3>Монета</h3><p>Станет ли частота ближе к ½?</p></div></div>
+                <div class="coin-stage"><div class="coin-visual" id="coinVisual" aria-hidden="true">V</div><div class="coin-result"><span>Орёл</span><strong id="coinFrequency">—</strong><div class="frequency-track"><span id="coinBar"></span></div><small>Теория: 0,50</small></div></div>
+                <div class="lab-controls"><label for="coinTrials">Бросков</label><select id="coinTrials"><option value="10">10</option><option value="100" selected>100</option><option value="1000">1 000</option></select><button class="button button-small" id="flipCoinButton" type="button">Бросить монету <span>↗</span></button></div>
+                <p class="lab-feedback" id="coinFeedback" aria-live="polite">Нажми на кнопку, чтобы провести эксперимент.</p>
+            </article>
+            <article class="lab-card normal-card">
+                <div class="lab-card-title"><span class="lab-icon bell-icon">∿</span><div><h3>Форма распределения</h3><p>Поменяй параметры кривой</p></div></div>
+                <div class="normal-demo"><svg id="normalDemo" viewBox="0 0 520 210" role="img" aria-label="Интерактивная кривая нормального распределения">
+                    <defs><linearGradient id="miniFill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#9a7aff" stop-opacity=".55"/><stop offset="1" stop-color="#7151e8" stop-opacity="0"/></linearGradient></defs>
+                    <path class="mini-grid" d="M30 35H500M30 80H500M30 125H500M30 170H500M80 20V180M160 20V180M240 20V180M320 20V180M400 20V180M480 20V180"/><path id="normalArea" class="mini-area" d=""/><path id="normalCurve" class="mini-curve" d=""/><path id="normalMeanLine" class="mini-mean" d=""/>
+                </svg></div>
+                <div class="slider-row"><label for="meanSlider">Среднее <span id="meanLabel">0</span></label><input id="meanSlider" type="range" min="-3" max="3" step="0.1" value="0" /></div>
+                <div class="slider-row"><label for="sigmaSlider">Разброс <span id="sigmaLabel">1,0</span></label><input id="sigmaSlider" type="range" min="0.5" max="2.5" step="0.1" value="1" /></div>
+                <p class="lab-feedback">Среднее сдвигает центр. Разброс делает кривую шире или уже.</p>
+            </article>
+        </div>
+        <article class="lab-card monty-card">
+            <div class="lab-card-title"><span class="lab-icon">🚪</span><div><h3>Три двери</h3><p>Задача Монти Холла: довериться интуиции или сменить выбор?</p></div><span class="monty-rounds" id="montyScore">0 побед / 0 раундов</span></div>
+            <p class="monty-instructions" id="montyStatus" aria-live="polite">За одной дверью приз. Выбери дверь, а ведущий откроет одну пустую.</p>
+            <div class="monty-doors" id="montyDoors" aria-label="Выбери одну из трёх дверей">
+                <button type="button" data-door="0" aria-label="Выбрать дверь 1"><span class="door-number">01</span><span class="door-face">🚪</span><small>Дверь 1</small></button>
+                <button type="button" data-door="1" aria-label="Выбрать дверь 2"><span class="door-number">02</span><span class="door-face">🚪</span><small>Дверь 2</small></button>
+                <button type="button" data-door="2" aria-label="Выбрать дверь 3"><span class="door-number">03</span><span class="door-face">🚪</span><small>Дверь 3</small></button>
+            </div>
+            <div class="monty-actions" id="montyActions" hidden><span>Ведущий открыл козу. Что выбираешь?</span><button class="button button-small" type="button" data-strategy="stay">Остаться</button><button class="button button-small" type="button" data-strategy="switch">Сменить дверь</button></div>
+            <button class="button button-quiet monty-next" id="montyNext" type="button" hidden>Следующий раунд ↻</button>
+            <p class="monty-explanation" id="montyExplanation"></p>
+        </article>
+    </section>
+    <aside class="cat-tip"><span class="cat-tip-icon">✦</span><p><strong>Квант говорит:</strong> одна необычная серия не ломает теорию. Повтори эксперимент побольше — и сравни результат снова.</p></aside>
+</div>
+
+@section Scripts {
+<script>
+(() => {
+    const $ = id => document.getElementById(id);
+    const format = value => Number(value).toLocaleString('ru-RU', { maximumFractionDigits: 2 });
+    $('flipCoinButton').addEventListener('click', async () => {
+        const button = $('flipCoinButton'); button.disabled = true;
+        $('coinVisual').classList.remove('is-flipping'); void $('coinVisual').offsetWidth; $('coinVisual').classList.add('is-flipping');
+        $('coinFeedback').textContent = 'Подбрасываем монету…'; window.VariqCat?.say('Монета уже летит! Интересно, как близко частота окажется к половине?', 'thinking');
+        try {
+            const response = await fetch('/api/experiments/coin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ trials: Number($('coinTrials').value) }) });
+            const data = await response.json(); if (!response.ok) throw new Error(data.message || 'Не удалось провести эксперимент.');
+            $('coinFrequency').textContent = format(data.headsFrequency); $('coinBar').style.width = `${Math.min(100, data.headsFrequency * 100)}%`;
+            $('coinFeedback').textContent = `Орёл выпал ${format(data.heads)} из ${format(data.trials)} раз. Частота этой серии — ${format(data.headsFrequency)}.`;
+            window.VariqCat?.say(`Получилось ${format(data.headsFrequency)}. Теоретически ожидаем 0,5, но в каждой серии есть случайные колебания.`, 'happy');
+        } catch (error) { $('coinFeedback').textContent = error.message; window.VariqCat?.say(error.message, 'worried'); }
+        finally { window.setTimeout(() => { button.disabled = false; }, 500); }
+    });
+
+    const drawNormal = () => {
+        const mean = Number($('meanSlider').value), sigma = Number($('sigmaSlider').value);
+        $('meanLabel').textContent = format(mean); $('sigmaLabel').textContent = format(sigma);
+        const x0 = 30, width = 470, baseline = 180, amp = 142, points = [];
+        for (let i = 0; i <= 100; i++) { const x = i / 100 * 6 - 3; const density = Math.exp(-0.5 * Math.pow((x - mean) / sigma, 2)); points.push(`${i === 0 ? 'M' : 'L'} ${(x0 + i / 100 * width).toFixed(1)} ${(baseline - density * amp).toFixed(1)}`); }
+        const line = points.join(' '); $('normalCurve').setAttribute('d', line); $('normalArea').setAttribute('d', `${line} L ${x0 + width} ${baseline} L ${x0} ${baseline} Z`);
+        $('normalMeanLine').setAttribute('d', `M ${x0 + ((mean + 3) / 6) * width} 20 V ${baseline}`);
+    };
+    $('meanSlider').addEventListener('input', drawNormal); $('sigmaSlider').addEventListener('input', drawNormal); drawNormal();
+
+    let prizeDoor = -1, firstDoor = -1, wins = 0, rounds = 0;
+    const doorButtons = [...document.querySelectorAll('#montyDoors [data-door]')];
+    const actions = $('montyActions');
+    const startRound = () => {
+        prizeDoor = Math.floor(Math.random() * 3); firstDoor = -1; actions.hidden = true; $('montyNext').hidden = true; $('montyExplanation').textContent = '';
+        $('montyStatus').textContent = 'За одной дверью спрятан приз. Выбери дверь — ведущий откроет одну пустую.';
+        doorButtons.forEach(button => { button.disabled = false; button.classList.remove('is-picked', 'is-open', 'is-prize'); button.querySelector('.door-face').textContent = '🚪'; });
+    };
+    doorButtons.forEach(button => button.addEventListener('click', () => {
+        if (firstDoor >= 0) return;
+        firstDoor = Number(button.dataset.door); button.classList.add('is-picked'); doorButtons.forEach(item => item.disabled = true);
+        const available = [0, 1, 2].filter(door => door !== firstDoor && door !== prizeDoor);
+        const hostDoor = available[Math.floor(Math.random() * available.length)];
+        const opened = doorButtons[hostDoor]; opened.classList.add('is-open'); opened.querySelector('.door-face').textContent = '🐐';
+        $('montyStatus').textContent = `Ведущий открыл дверь ${hostDoor + 1}. За ней коза. Остаться или сменить выбор?`; actions.hidden = false;
+        window.VariqCat?.say('Я бы сменил дверь! Но сначала проверь стратегию сам(а).', 'thinking');
+    }));
+    actions.querySelectorAll('[data-strategy]').forEach(button => button.addEventListener('click', () => {
+        const switching = button.dataset.strategy === 'switch';
+        const finalDoor = switching ? doorButtons.find(item => Number(item.dataset.door) !== firstDoor && !item.classList.contains('is-open')) : doorButtons[firstDoor];
+        const won = Number(finalDoor.dataset.door) === prizeDoor; rounds++; if (won) wins++;
+        actions.hidden = true; $('montyNext').hidden = false;
+        doorButtons.forEach(item => { item.disabled = true; if (Number(item.dataset.door) === prizeDoor) { item.classList.add('is-prize'); item.querySelector('.door-face').textContent = '🎁'; } });
+        $('montyStatus').textContent = won ? 'Приз за твоей дверью! ✨' : 'В этот раз приз был за другой дверью. Попробуем ещё?';
+        $('montyExplanation').textContent = switching ? 'Смена выигрывает, когда первый выбор был козой. Таких дверей две из трёх — поэтому шанс стратегии смены равен ⅔.' : 'Чтобы выиграть без смены, нужно сразу угадать дверь с призом. Шанс первого выбора — ⅓.';
+        $('montyScore').textContent = `${wins} побед / ${rounds} раундов`;
+        window.VariqCat?.say(won ? 'Ура, мы выиграли! Смена выбора часто помогает в этой задаче.' : 'Не расстраивайся: одна игра случайна. В длинной серии стратегия видна лучше.', won ? 'happy' : 'worried');
+    }));
+    $('montyNext').addEventListener('click', startRound);
+    startRound();
+})();
+</script>
+}

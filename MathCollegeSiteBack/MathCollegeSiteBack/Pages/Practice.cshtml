@@ -1,0 +1,71 @@
+@page
+@model PracticeModel
+@{
+    ViewData["Title"] = "Задания";
+}
+
+<div class="practice-page">
+    <header class="section-page-header">
+        <span class="section-kicker">ПРАКТИКА VARIQ</span>
+        <h1>К какому уроку перейдём?</h1>
+        <p>Выбирай тему или ищи урок по названию. Кнопка сразу откроет нужное задание.</p>
+        <label class="practice-search"><span aria-hidden="true">⌕</span><input id="lessonSearch" type="search" placeholder="Например, формула Байеса" aria-label="Найти урок" /><kbd>Поиск</kbd></label>
+        <div class="practice-topic-chips" id="topicChips">
+            <button type="button" class="is-active" data-topic="all">Все темы</button>
+            @foreach (var topic in Model.Topics)
+            {
+                <button type="button" data-topic="topic-@topic.Id">@topic.Name</button>
+            }
+        </div>
+    </header>
+
+    @foreach (var topic in Model.Topics)
+    {
+        <section class="practice-topic" id="topic-@topic.Id" data-topic-section="topic-@topic.Id">
+            <div class="practice-topic-heading"><span class="practice-topic-number">@topic.Id.ToString("00")</span><div><h2>@topic.Name</h2><p>@topic.Description</p></div></div>
+            <div class="practice-lesson-grid">
+                @foreach (var lesson in topic.Lessons)
+                {
+                    <article class="practice-lesson-card" data-search="@($"{topic.Name} {lesson.Title} {lesson.Summary}".ToLowerInvariant())">
+                        <span class="practice-card-icon" aria-hidden="true">∑</span>
+                        <div><span class="practice-card-topic">@topic.Name</span><h3>@lesson.Title</h3><p>@lesson.Summary</p><small>@lesson.TaskCount заданий · объяснение и разбор</small></div>
+                        <a href="/Task?lessonId=@lesson.Id" aria-label="Начать урок: @lesson.Title">Начать <span aria-hidden="true">→</span></a>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+    <p id="practiceEmpty" class="empty-message" hidden>Ничего не нашлось. Попробуй другое слово или выбери «Все темы».</p>
+</div>
+
+@section Scripts {
+<script>
+(() => {
+    const search = document.getElementById('lessonSearch');
+    const sections = [...document.querySelectorAll('[data-topic-section]')];
+    const cards = [...document.querySelectorAll('.practice-lesson-card')];
+    const empty = document.getElementById('practiceEmpty');
+    let activeTopic = 'all';
+    const update = () => {
+        const query = search.value.trim().toLocaleLowerCase('ru-RU');
+        let shown = 0;
+        for (const card of cards) {
+            const topicMatch = activeTopic === 'all' || card.closest('[data-topic-section]').dataset.topicSection === activeTopic;
+            const textMatch = !query || card.dataset.search.includes(query);
+            card.hidden = !(topicMatch && textMatch);
+            if (!card.hidden) shown++;
+        }
+        sections.forEach(section => { section.hidden = !section.querySelector('.practice-lesson-card:not([hidden])'); });
+        empty.hidden = shown !== 0;
+    };
+    search.addEventListener('input', update);
+    document.getElementById('topicChips').addEventListener('click', event => {
+        const button = event.target.closest('[data-topic]');
+        if (!button) return;
+        activeTopic = button.dataset.topic;
+        document.querySelectorAll('#topicChips button').forEach(item => item.classList.toggle('is-active', item === button));
+        update();
+    });
+})();
+</script>
+}

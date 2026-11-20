@@ -19,16 +19,16 @@
                 <span></span><span></span><span></span>
             </button>
             <nav class="main-nav" id="mainNav" aria-label="Главная навигация">
-                <a href="/Themes">Курс</a>
-                <a href="/Themes#roadmap">Дорожка</a>
-                <a href="/#lab">Лаборатория</a>
-                <a href="/#journal">Журнал</a>
+                <a href="/Themes">Темы</a>
+                <a href="/Practice">Задания</a>
+                <a href="/Lab">Игры</a>
+                <a href="/Journal">Факты</a>
             </nav>
             <div class="header-actions">
                 <a class="streak-pill" id="streak-container" href="/Themes" title="Дней с завершёнными занятиями" hidden>
                     <span class="fire-icon" aria-hidden="true">🔥</span><span id="streak-count">0</span><span class="streak-label">дней</span>
                 </a>
-                <a class="header-start" href="/Themes">Продолжить <span aria-hidden="true">↗</span></a>
+                <a class="header-start" href="/Practice">К заданиям <span aria-hidden="true">↗</span></a>
             </div>
         </div>
     </header>
@@ -36,6 +36,8 @@
     <main class="page-main">
         @RenderBody()
     </main>
+
+    <partial name="_Quant" />
 
     <footer class="site-footer">
         <a class="brand brand-small" href="/"><span class="brand-mark" aria-hidden="true">∑</span><span>VARIQ</span></a>
@@ -62,6 +64,49 @@
                     document.getElementById('streak-count').textContent = data.streak;
                     document.getElementById('streak-container').hidden = false;
                 }).catch(() => {});
+
+            const widget = document.getElementById('quantWidget');
+            const toggle = document.getElementById('quantToggle');
+            const bubble = document.getElementById('quantBubble');
+            const speech = document.getElementById('quantSpeech');
+            const actions = document.getElementById('quantActions');
+            const defaults = {
+                '/': 'Привет! Я Квант. Готов открыть первую тему? Жми «Темы» — и пойдём по дорожке вместе.',
+                '/themes': 'На дорожке можно выбирать любой урок. Пройденные темы доступны для повтора, а следующий шаг подсвечен.',
+                '/practice': 'Выбирай урок и тренируйся. Если ответ не получится, я помогу спокойно разобрать решение.',
+                '/lab': 'Здесь можно бросать монету, менять форму кривой и играть в задачу с дверями. Попробуй сам(а)!',
+                '/journal': 'У меня есть короткие заметки о странных и красивых закономерностях. Выбирай любую!',
+                '/task': 'Давай разберём урок по маленьким шагам. Я рядом, если станет трудно.'
+            };
+            const route = location.pathname.toLowerCase();
+            const defaultMessage = defaults[route] || defaults['/'];
+            const setMood = mood => { widget.dataset.mood = mood || 'idle'; };
+            const say = (message, mood = 'talking', choices = []) => {
+                speech.textContent = message || defaultMessage;
+                setMood(mood);
+                actions.replaceChildren();
+                for (const choice of choices) {
+                    const button = document.createElement('button');
+                    button.type = 'button'; button.textContent = choice.label;
+                    button.addEventListener('click', choice.onClick);
+                    actions.appendChild(button);
+                }
+                actions.hidden = choices.length === 0;
+                bubble.hidden = false;
+                toggle.setAttribute('aria-expanded', 'true');
+                window.clearTimeout(window.quantSpeechTimer);
+                if (!choices.length) window.quantSpeechTimer = window.setTimeout(() => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); }, 6500);
+            };
+            toggle?.addEventListener('click', () => {
+                if (bubble.hidden) say(defaultMessage, 'happy');
+                else { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); }
+            });
+            document.getElementById('quantClose')?.addEventListener('click', () => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); });
+            window.VariqCat = { say, setMood, close: () => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); } };
+            document.addEventListener('click', event => {
+                const prompt = event.target.closest('[data-quant-say]');
+                if (prompt) say(prompt.dataset.quantSay, 'happy');
+            });
         })();
     </script>
     @await RenderSectionAsync("Scripts", required: false)
