@@ -1,0 +1,200 @@
+﻿@page
+@model MathCollegeSiteBack.Pages.ThemesModel
+
+@{
+    ViewData["Title"] = "Темы";
+    var previousTopicCompleted = true;
+}
+
+<style>
+    .themes-page {
+        max-width: 1000px;
+        margin: 30px auto;
+    }
+
+    .themes-intro {
+        color: #526174;
+        margin-bottom: 28px;
+    }
+
+    .topic-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 24px;
+        margin: 20px 0;
+        box-shadow: 0 5px 18px rgba(30, 50, 80, 0.06);
+    }
+
+        .topic-card.completed {
+            opacity: 0.68;
+        }
+
+        .topic-card.recommended {
+            border: 2px solid #ffb52e;
+            box-shadow: 0 0 22px rgba(255, 181, 46, 0.28);
+        }
+
+    .topic-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+        .topic-heading h2 {
+            margin: 0;
+        }
+
+    .topic-badge {
+        border-radius: 999px;
+        padding: 7px 13px;
+        font-size: 14px;
+        font-weight: 700;
+        background: #fff3d6;
+        color: #895800;
+    }
+
+    .completed .topic-badge {
+        background: #e8f5e9;
+        color: #28733a;
+    }
+
+    .lesson-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        padding: 16px;
+        margin-top: 14px;
+        border-radius: 14px;
+        background: #f7f9fc;
+    }
+
+        .lesson-card h3 {
+            margin: 0 0 6px;
+        }
+
+        .lesson-card p {
+            margin: 0;
+            color: #526174;
+        }
+
+    .lesson-status {
+        display: block;
+        margin-top: 7px;
+        color: #28733a;
+        font-weight: 700;
+    }
+
+    .lesson-link {
+        flex-shrink: 0;
+        display: inline-block;
+        padding: 11px 17px;
+        border-radius: 10px;
+        background: #087cf0;
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+        .lesson-link:hover {
+            background: #0665c5;
+        }
+
+    .empty-message {
+        padding: 20px;
+        background: white;
+        border-radius: 14px;
+    }
+
+    @@media (max-width: 600px) {
+        .topic-card {
+            padding: 17px;
+        }
+
+        .lesson-card {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<main class="themes-page">
+    <h1>Темы курса</h1>
+    <p class="themes-intro">
+        Выбирай тему и проходи уроки. Пройденные уроки всегда можно открыть снова.
+    </p>
+
+    @if (Model.Topics.Count == 0)
+    {
+        <p class="empty-message">Пока нет опубликованных тем.</p>
+    }
+    else
+    {
+        @foreach (var topic in Model.Topics)
+        {
+            var topicCompleted =
+                topic.Lessons.Count > 0 &&
+                topic.Lessons.All(lesson => lesson.IsCompleted);
+
+            var isRecommended = !topicCompleted && previousTopicCompleted;
+
+            var topicClass = topicCompleted
+                ? "topic-card completed"
+                : isRecommended
+                    ? "topic-card recommended"
+                    : "topic-card";
+
+            <section class="@topicClass">
+                <div class="topic-heading">
+                    <h2>@topic.Name</h2>
+
+                    @if (topicCompleted)
+                    {
+                        <span class="topic-badge">Тема пройдена</span>
+                    }
+                    else if (isRecommended)
+                    {
+                        <span class="topic-badge">Продолжить обучение ✨</span>
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(topic.Description))
+                {
+                    <p>@topic.Description</p>
+                }
+
+                @if (topic.Lessons.Count == 0)
+                {
+                    <p>В этой теме пока нет опубликованных уроков.</p>
+                }
+                else
+                {
+                    @foreach (var lesson in topic.Lessons)
+                    {
+                        <article class="lesson-card">
+                            <div>
+                                <h3>@lesson.Title</h3>
+                                <p>@lesson.Summary</p>
+                                <p>Заданий: @lesson.TaskCount</p>
+
+                                @if (lesson.IsCompleted)
+                                {
+                                    <span class="lesson-status">Урок пройден ✓ Можно повторить</span>
+                                }
+                            </div>
+
+                            <a class="lesson-link" href="/Task?lessonId=@lesson.Id">
+                                @(lesson.IsCompleted ? "Повторить урок" : "Открыть урок")
+                            </a>
+                        </article>
+                    }
+                }
+            </section>
+
+            previousTopicCompleted = topicCompleted;
+        }
+    }
+</main>

@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Математика</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        nav {
+            background: #fff;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eaeaea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .nav-links a {
+            margin-right: 20px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+            .nav-links a:hover {
+                color: #007bff;
+            }
+
+        .streak {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff9800;
+            background: #fff3e0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 5px rgba(255,152,0,0.3);
+        }
+
+            .streak span {
+                font-size: 24px;
+            }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="nav-links">
+                    <a href="/">Главная</a>
+                    <a href="/Themes">Темы</a>
+                    <a href="/Task">Задание</a>
+                </div>
+                <div class="streak" id="streak-container" style="display: none;" title="Дней подряд">
+                    <span>🔥</span> <span id="streak-count">0</span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        @RenderBody()
+    </main>
+
+    <script>
+        async function updateLayoutStreak() {
+            try {
+                const response = await fetch('/api/streak/status');
+                if (!response.ok) throw new Error();
+                const data = await response.json();
+                const container = document.getElementById('streak-container');
+                const count = document.getElementById('streak-count');
+                
+                if (data.streak > 0) {
+                    count.innerText = data.streak;
+                    container.style.display = 'flex';
+                } else {
+                    container.style.display = 'none';
+                }
+            } catch (e) {
+                console.log("Огонек еще не создан в базе");
+                document.getElementById('streak-container').style.display = 'none';
+            }
+        }
+        updateLayoutStreak();
+    </script>
+</body>
+</html>
