@@ -1,200 +1,114 @@
-﻿@page
+@page
 @model MathCollegeSiteBack.Pages.ThemesModel
-
 @{
-    ViewData["Title"] = "Темы";
+    ViewData["Title"] = "Дорожка обучения";
     var previousTopicCompleted = true;
+    var completedLessons = Model.Topics.SelectMany(topic => topic.Lessons).Count(lesson => lesson.IsCompleted);
+    var totalLessons = Model.Topics.Sum(topic => topic.Lessons.Count);
+    var progressPercent = totalLessons == 0 ? 0 : (int)Math.Round(100d * completedLessons / totalLessons);
+    var topicFacts = new[] {
+        "В случайном опыте важны все возможные исходы, даже если некоторые из них кажутся неожиданными.",
+        "Изменение порядка двух объектов удваивает число вариантов — если эти объекты различимы.",
+        "Вероятность невозможного события равна нулю, а достоверного — единице.",
+        "В длинной серии относительная частота обычно колеблется меньше, но точное совпадение не гарантировано.",
+        "Порядок важен для пароля и распределения ролей, но обычно не важен для выбора команды.",
+        "Если результат одного опыта не меняет шансы следующего, события независимы.",
+        "Интуиция часто путает вероятность отдельного результата и вероятность целого набора результатов.",
+        "Среднее может сильно сдвинуться из-за одного очень большого наблюдения.",
+        "Два распределения могут иметь одинаковое среднее, но совсем разную форму и разброс.",
+        "Колоколообразная кривая возникает во многих моделях, но реальные данные не обязаны быть нормальными.",
+        "Среднее выборки становится надёжнее при росте объёма случайной выборки.",
+        "Доверительный интервал — это метод, который при повторении строит интервалы с заданной долей попаданий.",
+        "Статистическая значимость не говорит сама по себе, насколько эффект велик и важен на практике.",
+        "Таблица сопряжённости помогает увидеть связь категорий, а не только сравнить отдельные числа.",
+        "Сильная корреляция не доказывает, что изменение одной величины вызывает изменение другой.",
+        "Симуляция помогает исследовать модель, но качество вывода зависит от того, насколько разумно заданы её правила."
+    };
 }
 
-<style>
-    .themes-page {
-        max-width: 1000px;
-        margin: 30px auto;
-    }
-
-    .themes-intro {
-        color: #526174;
-        margin-bottom: 28px;
-    }
-
-    .topic-card {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 24px;
-        margin: 20px 0;
-        box-shadow: 0 5px 18px rgba(30, 50, 80, 0.06);
-    }
-
-        .topic-card.completed {
-            opacity: 0.68;
-        }
-
-        .topic-card.recommended {
-            border: 2px solid #ffb52e;
-            box-shadow: 0 0 22px rgba(255, 181, 46, 0.28);
-        }
-
-    .topic-heading {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-
-        .topic-heading h2 {
-            margin: 0;
-        }
-
-    .topic-badge {
-        border-radius: 999px;
-        padding: 7px 13px;
-        font-size: 14px;
-        font-weight: 700;
-        background: #fff3d6;
-        color: #895800;
-    }
-
-    .completed .topic-badge {
-        background: #e8f5e9;
-        color: #28733a;
-    }
-
-    .lesson-card {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 18px;
-        padding: 16px;
-        margin-top: 14px;
-        border-radius: 14px;
-        background: #f7f9fc;
-    }
-
-        .lesson-card h3 {
-            margin: 0 0 6px;
-        }
-
-        .lesson-card p {
-            margin: 0;
-            color: #526174;
-        }
-
-    .lesson-status {
-        display: block;
-        margin-top: 7px;
-        color: #28733a;
-        font-weight: 700;
-    }
-
-    .lesson-link {
-        flex-shrink: 0;
-        display: inline-block;
-        padding: 11px 17px;
-        border-radius: 10px;
-        background: #087cf0;
-        color: white;
-        text-decoration: none;
-        font-weight: 700;
-    }
-
-        .lesson-link:hover {
-            background: #0665c5;
-        }
-
-    .empty-message {
-        padding: 20px;
-        background: white;
-        border-radius: 14px;
-    }
-
-    @@media (max-width: 600px) {
-        .topic-card {
-            padding: 17px;
-        }
-
-        .lesson-card {
-            align-items: flex-start;
-            flex-direction: column;
-        }
-    }
-</style>
-
-<main class="themes-page">
-    <h1>Темы курса</h1>
-    <p class="themes-intro">
-        Выбирай тему и проходи уроки. Пройденные уроки всегда можно открыть снова.
-    </p>
+<main class="themes-page" id="roadmap">
+    <div class="themes-topline">
+        <div>
+            <span class="section-kicker">ТВОЙ МАРШРУТ ПО КУРСУ</span>
+            <h1>Дорожка открытий</h1>
+            <p class="themes-intro">Иди шаг за шагом, возвращайся к пройденным урокам и открывай новые главы. Квант уже приготовил карту.</p>
+        </div>
+        <div class="roadmap-progress" aria-label="Общий прогресс курса">
+            <span><span>Путь пройден</span><strong>@progressPercent%</strong></span>
+            <div class="roadmap-track"><i style="width: @progressPercent%"></i></div>
+            <span style="margin-top:6px"><span>@completedLessons из @totalLessons уроков</span><span>✦</span></span>
+        </div>
+    </div>
 
     @if (Model.Topics.Count == 0)
     {
-        <p class="empty-message">Пока нет опубликованных тем.</p>
+        <div class="empty-message">Карта пока пуста. Скоро здесь появятся новые темы.</div>
     }
     else
     {
-        @foreach (var topic in Model.Topics)
-        {
-            var topicCompleted =
-                topic.Lessons.Count > 0 &&
-                topic.Lessons.All(lesson => lesson.IsCompleted);
+        <div class="roadmap">
+            @for (var topicIndex = 0; topicIndex < Model.Topics.Count; topicIndex++)
+            {
+                var topic = Model.Topics[topicIndex];
+                var topicCompleted = topic.Lessons.Count > 0 && topic.Lessons.All(lesson => lesson.IsCompleted);
+                var isRecommended = !topicCompleted && previousTopicCompleted;
+                var topicClass = topicCompleted ? "topic-stop is-complete" : isRecommended ? "topic-stop is-current" : "topic-stop";
+                var firstIncompleteLesson = topic.Lessons.FirstOrDefault(lesson => !lesson.IsCompleted);
+                var fact = topicFacts[topicIndex % topicFacts.Length];
 
-            var isRecommended = !topicCompleted && previousTopicCompleted;
+                <section class="@topicClass">
+                    <div class="topic-top">
+                        <span class="topic-number">@(topicIndex + 1 < 10 ? $"0{topicIndex + 1}" : (topicIndex + 1).ToString())</span>
+                        <div class="topic-heading">
+                            <h2>@topic.Name</h2>
+                            <p>@topic.Description</p>
+                        </div>
+                        @if (topicCompleted)
+                        {
+                            <span class="topic-status">✓ Глава пройдена</span>
+                        }
+                        else if (isRecommended)
+                        {
+                            <span class="topic-status">✦ Твой следующий шаг</span>
+                        }
+                    </div>
 
-            var topicClass = topicCompleted
-                ? "topic-card completed"
-                : isRecommended
-                    ? "topic-card recommended"
-                    : "topic-card";
+                    <details class="topic-fact">
+                        <summary><span>✧</span> Факт на полях <b>＋</b></summary>
+                        <p>@fact</p>
+                    </details>
 
-            <section class="@topicClass">
-                <div class="topic-heading">
-                    <h2>@topic.Name</h2>
-
-                    @if (topicCompleted)
+                    @if (topic.Lessons.Count == 0)
                     {
-                        <span class="topic-badge">Тема пройдена</span>
+                        <p class="topic-empty">Уроки этой главы скоро появятся.</p>
                     }
-                    else if (isRecommended)
+                    else
                     {
-                        <span class="topic-badge">Продолжить обучение ✨</span>
+                        <div class="topic-lessons">
+                            @for (var lessonIndex = 0; lessonIndex < topic.Lessons.Count; lessonIndex++)
+                            {
+                                var lesson = topic.Lessons[lessonIndex];
+                                var isNext = !lesson.IsCompleted && lesson.Id == firstIncompleteLesson?.Id;
+                                var lessonClass = lesson.IsCompleted ? "path-lesson is-done" : isNext ? "path-lesson is-next" : "path-lesson";
+                                <article class="@lessonClass">
+                                    <span class="lesson-node">@(lesson.IsCompleted ? "✓" : (lessonIndex + 1).ToString())</span>
+                                    <div>
+                                        <strong>@lesson.Title</strong>
+                                        <small>@lesson.TaskCount заданий <span aria-hidden="true">·</span> @(lesson.IsCompleted ? "Можно повторить" : "Объяснение и практика")</small>
+                                    </div>
+                                    <a href="/Task?lessonId=@lesson.Id">@(lesson.IsCompleted ? "Повторить ↻" : "Открыть →")</a>
+                                </article>
+                            }
+                        </div>
                     }
-                </div>
-
-                @if (!string.IsNullOrWhiteSpace(topic.Description))
-                {
-                    <p>@topic.Description</p>
-                }
-
-                @if (topic.Lessons.Count == 0)
-                {
-                    <p>В этой теме пока нет опубликованных уроков.</p>
-                }
-                else
-                {
-                    @foreach (var lesson in topic.Lessons)
-                    {
-                        <article class="lesson-card">
-                            <div>
-                                <h3>@lesson.Title</h3>
-                                <p>@lesson.Summary</p>
-                                <p>Заданий: @lesson.TaskCount</p>
-
-                                @if (lesson.IsCompleted)
-                                {
-                                    <span class="lesson-status">Урок пройден ✓ Можно повторить</span>
-                                }
-                            </div>
-
-                            <a class="lesson-link" href="/Task?lessonId=@lesson.Id">
-                                @(lesson.IsCompleted ? "Повторить урок" : "Открыть урок")
-                            </a>
-                        </article>
-                    }
-                }
-            </section>
-
-            previousTopicCompleted = topicCompleted;
-        }
+                </section>
+                previousTopicCompleted = topicCompleted;
+            }
+        </div>
+        <div class="roadmap-legend" aria-label="Обозначения на дорожке">
+            <span><i class="legend-dot"></i> пройдено — можно повторить</span>
+            <span><i class="legend-dot next"></i> следующий шаг</span>
+            <span><i class="legend-dot free"></i> открыть в любое время</span>
+        </div>
     }
 </main>

@@ -1,109 +1,17 @@
-﻿@page
+@page
 @model MathCollegeSiteBack.Pages.TaskModel
 
 @{
     ViewData["Title"] = "Урок";
 }
 
-<style>
-    .lesson-page {
-        max-width: 850px;
-        margin: 30px auto;
-    }
-
-    .lesson-card {
-        background: white;
-        border-radius: 18px;
-        padding: 26px;
-        margin-bottom: 18px;
-        box-shadow: 0 5px 20px rgba(30, 50, 80, 0.08);
-    }
-
-    .lesson-content {
-        white-space: pre-wrap;
-        line-height: 1.7;
-    }
-
-    .lesson-button {
-        border: 0;
-        border-radius: 10px;
-        padding: 12px 19px;
-        background: #087cf0;
-        color: white;
-        font-size: 16px;
-        font-weight: 700;
-        cursor: pointer;
-        margin: 8px 8px 0 0;
-    }
-
-        .lesson-button:hover {
-            background: #0665c5;
-        }
-
-        .lesson-button.secondary {
-            background: #64748b;
-        }
-
-        .lesson-button.danger {
-            background: #c62828;
-        }
-
-    .answer-option {
-        display: block;
-        padding: 13px;
-        margin: 10px 0;
-        border: 1px solid #d5deea;
-        border-radius: 10px;
-        cursor: pointer;
-    }
-
-        .answer-option:hover {
-            background: #f3f7fc;
-        }
-
-        .answer-option input {
-            margin-right: 10px;
-        }
-
-    .number-answer {
-        width: 100%;
-        max-width: 300px;
-        padding: 12px;
-        border: 1px solid #b8c4d3;
-        border-radius: 9px;
-        font-size: 17px;
-    }
-
-    .explanation-box {
-        background: #fff8e8;
-        border-left: 5px solid #ffb52e;
-        border-radius: 10px;
-        padding: 16px;
-        margin: 18px 0;
-    }
-
-    .status-message {
-        font-weight: 700;
-        margin: 14px 0;
-    }
-
-    .hidden {
-        display: none;
-    }
-
-    @@media (max-width: 600px) {
-        .lesson-card {
-            padding: 18px;
-        }
-    }
-</style>
-
 <main class="lesson-page" id="lessonApp" data-lesson-id="@(Model.LessonId ?? 0)">
-    <p id="statusMessage" class="status-message" role="status">
+    <p id="statusMessage" class="status-message" role="status" aria-live="polite">
         Загружаем урок…
     </p>
 
     <section id="lessonIntro" class="lesson-card hidden">
+        <div class="lesson-topline"><span class="lesson-kicker">ЗАНЯТИЕ VARIQ</span><a href="/Themes" class="lesson-back">← К дорожке</a></div>
         <h1 id="lessonTitle"></h1>
         <p id="lessonSummary"></p>
 
@@ -118,7 +26,8 @@
     </section>
 
     <section id="taskSection" class="lesson-card hidden">
-        <p id="taskProgress"></p>
+        <div class="task-topline"><p id="taskProgress"></p><span class="task-score-chip">✦ <span id="liveScore">0</span> баллов</span></div>
+        <div class="task-progress-track" aria-label="Прогресс заданий"><i id="taskProgressFill"></i></div>
         <h2 id="taskPrompt"></h2>
 
         <div id="answerOptions"></div>
@@ -161,6 +70,7 @@
     </section>
 
     <section id="completionPanel" class="lesson-card hidden">
+        <span class="completion-spark" aria-hidden="true">✦</span>
         <h2>Занятие завершено!</h2>
         <p id="completionMessage"></p>
         <p id="completionScore"></p>
@@ -182,6 +92,8 @@
 
     const taskSection = document.getElementById("taskSection");
     const taskProgress = document.getElementById("taskProgress");
+    const taskProgressFill = document.getElementById("taskProgressFill");
+    const liveScore = document.getElementById("liveScore");
     const taskPrompt = document.getElementById("taskPrompt");
     const answerOptions = document.getElementById("answerOptions");
     const numberAnswer = document.getElementById("numberAnswer");
@@ -218,7 +130,7 @@
 
     function setStatus(message, isError = false) {
         statusMessage.textContent = message || "";
-        statusMessage.style.color = isError ? "#b42318" : "#28733a";
+        statusMessage.style.color = isError ? "#ff8d9b" : "#72e8c7";
     }
 
     async function api(url, options = {}) {
@@ -310,6 +222,7 @@
             taskProgress.textContent =
                 `Задание ${task.taskOrder} из ${task.taskCount}. ` +
                 `Попытка ${task.attempts + 1} из 3.`;
+            taskProgressFill.style.width = `${Math.max(4, (task.taskOrder - 1) / task.taskCount * 100)}%`;
 
             if (task.explanationRequired) {
                 hide(taskSection);
@@ -416,11 +329,13 @@
                     body: JSON.stringify(answer)
                 }
             );
+            if (result.score !== undefined) liveScore.textContent = result.score;
 
             hide(taskSection);
 
             if (result.lessonRestarted) {
                 runId = result.newRunId;
+                liveScore.textContent = "0";
                 restartPending = true;
                 lessonContent.textContent = result.lessonContent || "";
                 startButton.textContent = "Начать урок заново";
