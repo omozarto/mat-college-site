@@ -26,7 +26,7 @@
             </nav>
             <div class="header-actions">
                 <a class="streak-pill" id="streak-container" href="/Themes" title="Дней с завершёнными занятиями" hidden>
-                    <span class="fire-icon" aria-hidden="true">🔥</span><span id="streak-count">0</span><span class="streak-label">дней</span>
+                    <svg class="fire-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="fire-outer" d="M13.1 1.5c.8 4.8-2.1 5.4-.8 8.4.8 1.8 2.4 1.7 2.7-.3.2-1.2-.1-2.1.5-3.2 3.1 2.1 5 5.5 4.4 9.2-.6 4.1-3.8 7-8.1 7s-7.8-3.1-7.8-7.5c0-3.3 1.8-5.8 4.2-8.1-.1 3.3.9 4.2 1.8 3.8 1.5-.7 1.2-2.9 1.1-4.3-.1-1.8.4-3.5 2-5Z"/><path class="fire-inner" d="M12.6 12.2c.1 1.8-1.3 2.5-1.2 4.1.1 1.1.8 1.7 1.7 1.5.8-.2 1.1-1.1 1.2-1.8 1.1 1 1.7 2.1 1.6 3.3-.1 1.7-1.5 2.9-3.4 2.9s-3.5-1.4-3.5-3.3c0-1.6 1.1-3.1 3.6-6.7Z"/></svg><span id="streak-count">0</span><span class="streak-label">дней</span>
                 </a>
                 <a class="header-start" href="/Practice">К заданиям <span aria-hidden="true">↗</span></a>
             </div>
@@ -70,6 +70,74 @@
             const bubble = document.getElementById('quantBubble');
             const speech = document.getElementById('quantSpeech');
             const actions = document.getElementById('quantActions');
+            const pixelCanvas = document.getElementById('quantPixelCat');
+            const pixelContext = pixelCanvas?.getContext('2d');
+            const colors = { outline: '#24183f', shade: '#53358f', fur: '#8656d4', mid: '#aa78ee', light: '#d0a9ff', shine: '#f1dcff', ear: '#e89edc', hoodie: '#211b39', hoodLight: '#49366d', trim: '#a98af0', eye: '#fff8ff', pupil: '#211735', blush: '#ee9bc9', gold: '#f5c56f' };
+            const pixel = (x, y, color, width = 1, height = 1) => { pixelContext.fillStyle = colors[color] || color; pixelContext.fillRect(x, y, width, height); };
+            const bands = (rows, color) => rows.forEach(([y, left, right]) => pixel(left, y, color, right - left + 1));
+            let catFrame = 0;
+            const drawQuantCat = () => {
+                if (!pixelContext) return;
+                const mood = widget.dataset.mood || 'idle';
+                const bob = (mood === 'happy' ? (catFrame % 2 ? -1 : 0) : (catFrame % 4 === 0 ? -1 : 0));
+                const tailWag = mood === 'walking' ? (catFrame % 2 ? 2 : -1) : [0, 0, 1, 1, 0, -1, -1, 0][catFrame % 8];
+                pixelContext.clearRect(0, 0, 40, 40);
+                pixelContext.save(); pixelContext.translate(0, bob);
+                // Fluffy tail, shown behind the body.
+                bands([[27,30,34],[28,34,36],[29,36,37],[30,37,38],[31,37,38],[32,36,38],[33,34,37],[34,32,35]].map(([y,left,right]) => [y,left + tailWag,right + tailWag]), 'outline');
+                bands([[27,30,33],[28,34,35],[29,36,36],[30,37,37],[31,37,37],[32,36,37],[33,34,36],[34,32,34]].map(([y,left,right]) => [y,left + tailWag,right + tailWag]), 'fur');
+                bands([[29,34,34],[30,35,35],[31,35,35],[32,34,35],[33,33,34]].map(([y,left,right]) => [y,left + tailWag,right + tailWag]), 'light');
+                // Little legs and a dark, roomy hoodie.
+                bands([[26,12,27],[27,9,30],[28,8,31],[29,8,31],[30,9,30],[31,10,29],[32,10,29],[33,11,28],[34,11,28]], 'outline');
+                bands([[27,13,26],[28,10,29],[29,9,30],[30,10,29],[31,11,28],[32,11,28],[33,12,27]], 'hoodie');
+                bands([[27,13,14],[28,11,12],[29,10,10]], 'hoodLight');
+                bands([[28,27,28],[29,29,29],[30,30,30]], 'hoodLight');
+                bands([[34,12,17],[35,11,18],[36,12,17],[37,13,16]], 'outline');
+                bands([[34,13,17],[35,12,18],[36,13,17]], 'fur');
+                bands([[34,22,27],[35,21,28],[36,22,27],[37,23,26]], 'outline');
+                bands([[34,23,27],[35,22,28],[36,23,27]], 'fur');
+                bands([[35,14,16],[35,24,26]], 'light');
+                // Pointed ears, built one pixel row at a time.
+                bands([[2,10,11],[3,9,12],[4,8,13],[5,7,14],[6,7,15],[7,6,16],[8,6,17],[9,6,18],[10,6,19]], 'outline');
+                bands([[2,10,10],[3,10,11],[4,9,12],[5,9,12],[6,8,13],[7,8,14],[8,7,14],[9,7,15]], 'fur');
+                bands([[4,10,11],[5,10,12],[6,9,12],[7,9,13],[8,8,12]], 'ear');
+                bands([[2,28,29],[3,27,30],[4,26,31],[5,25,32],[6,24,33],[7,23,34],[8,22,34],[9,21,34],[10,20,34]], 'outline');
+                bands([[2,29,29],[3,28,29],[4,27,30],[5,27,30],[6,26,31],[7,25,32],[8,25,32],[9,24,33]], 'fur');
+                bands([[4,28,29],[5,27,29],[6,27,30],[7,26,30],[8,27,31]], 'ear');
+                // Round, tufted face silhouette.
+                bands([[9,13,27],[10,10,30],[11,8,32],[12,7,33],[13,6,34],[14,5,35],[15,5,35],[16,4,36],[17,4,36],[18,4,36],[19,5,35],[20,5,35],[21,6,34],[22,7,33],[23,9,31],[24,12,28],[25,15,25]], 'outline');
+                bands([[10,13,27],[11,10,30],[12,8,32],[13,7,33],[14,6,34],[15,6,34],[16,5,35],[17,5,35],[18,5,35],[19,6,34],[20,6,34],[21,7,33],[22,8,32],[23,10,30],[24,13,27]], 'fur');
+                bands([[10,14,20],[11,11,21],[12,9,20],[13,8,18],[14,7,16],[15,7,14]], 'light');
+                bands([[11,13,17],[12,11,16],[13,10,14]], 'shine');
+                bands([[16,5,7],[17,4,6],[18,4,7],[19,5,7]], 'mid');
+                bands([[16,33,35],[17,34,36],[18,33,36],[19,33,35]], 'shade');
+                // Face marks and eyebrows.
+                if (mood === 'happy') {
+                    bands([[14,11,12],[13,12,14],[14,15,16],[14,23,24],[13,25,27],[14,28,29]], 'outline');
+                } else {
+                    bands([[13,11,15],[12,12,14],[12,24,26],[13,23,27]], mood === 'worried' ? 'outline' : 'shade');
+                    bands([[14,10,15],[15,9,15],[16,9,14],[17,10,14],[18,11,13]], 'eye');
+                    bands([[14,24,29],[15,24,30],[16,25,30],[17,25,29],[18,26,28]], 'eye');
+                    const eyeShift = mood === 'thinking' ? 2 : 0;
+                    bands([[15,11 + eyeShift,13 + eyeShift],[16,11 + eyeShift,13 + eyeShift],[17,12 + eyeShift,13 + eyeShift],[15,25 + eyeShift,27 + eyeShift],[16,25 + eyeShift,27 + eyeShift],[17,26 + eyeShift,27 + eyeShift]], 'pupil');
+                    pixel(12 + eyeShift, 15, 'shine', 1, 1); pixel(26 + eyeShift, 15, 'shine', 1, 1);
+                }
+                if (mood === 'worried') { bands([[19,8,10],[20,9,11],[19,30,32],[20,29,31]], 'blush'); }
+                if (mood === 'happy') { bands([[19,8,10],[20,9,11],[19,30,32],[20,29,31]], 'blush'); }
+                bands([[19,18,19],[20,17,20]], 'shade');
+                if (mood === 'talking' && catFrame % 2 === 0) bands([[21,18,20],[22,19,19]], 'outline');
+                else bands([[21,17,18],[22,19,20]], 'outline');
+                bands([[22,4,9],[23,6,10],[22,30,35],[23,29,33]], 'light');
+                bands([[23,11,12],[23,27,28]], 'blush');
+                // Hoodie ties, pixel Sigma, and a curious paw for thinking.
+                bands([[28,18,18],[29,19,19],[30,18,20],[31,19,19]], 'trim');
+                bands([[28,21,23],[29,21,21],[29,23,23],[30,21,23]], 'gold');
+                if (mood === 'thinking') bands([[21,29,30],[20,28,30],[19,27,29]], 'light');
+                // A tiny idle sparkle.
+                if (mood === 'happy') { pixel(3, 11 + (catFrame % 2), 'shine', 2, 1); pixel(4, 10 + (catFrame % 2), 'shine'); }
+                pixelContext.restore();
+            };
+            window.setInterval(() => { catFrame++; drawQuantCat(); }, 360);
             const defaults = {
                 '/': 'Привет! Я Квант. Готов открыть первую тему? Жми «Темы» — и пойдём по дорожке вместе.',
                 '/themes': 'На дорожке можно выбирать любой урок. Пройденные темы доступны для повтора, а следующий шаг подсвечен.',
@@ -80,7 +148,7 @@
             };
             const route = location.pathname.toLowerCase();
             const defaultMessage = defaults[route] || defaults['/'];
-            const setMood = mood => { widget.dataset.mood = mood || 'idle'; };
+            const setMood = mood => { widget.dataset.mood = mood || 'idle'; drawQuantCat(); };
             const say = (message, mood = 'talking', choices = []) => {
                 speech.textContent = message || defaultMessage;
                 setMood(mood);
@@ -102,6 +170,7 @@
                 else { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); }
             });
             document.getElementById('quantClose')?.addEventListener('click', () => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); });
+            drawQuantCat();
             window.VariqCat = { say, setMood, close: () => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); } };
             document.addEventListener('click', event => {
                 const prompt = event.target.closest('[data-quant-say]');

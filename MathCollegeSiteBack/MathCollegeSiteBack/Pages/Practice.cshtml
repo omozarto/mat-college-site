@@ -10,13 +10,13 @@
         <h1>К какому уроку перейдём?</h1>
         <p>Выбирай тему или ищи урок по названию. Кнопка сразу откроет нужное задание.</p>
         <label class="practice-search"><span aria-hidden="true">⌕</span><input id="lessonSearch" type="search" placeholder="Например, формула Байеса" aria-label="Найти урок" /><kbd>Поиск</kbd></label>
-        <div class="practice-topic-chips" id="topicChips">
-            <button type="button" class="is-active" data-topic="all">Все темы</button>
+        <label class="practice-topic-filter" for="topicFilter"><span>Показать задания по теме</span><select id="topicFilter">
+            <option value="all">Все темы курса</option>
             @foreach (var topic in Model.Topics)
             {
-                <button type="button" data-topic="topic-@topic.Id">@topic.Name</button>
+                <option value="topic-@topic.Id">@topic.Name</option>
             }
-        </div>
+        </select></label>
     </header>
 
     @foreach (var topic in Model.Topics)
@@ -59,13 +59,7 @@
         empty.hidden = shown !== 0;
     };
     search.addEventListener('input', update);
-    document.getElementById('topicChips').addEventListener('click', event => {
-        const button = event.target.closest('[data-topic]');
-        if (!button) return;
-        activeTopic = button.dataset.topic;
-        document.querySelectorAll('#topicChips button').forEach(item => item.classList.toggle('is-active', item === button));
-        update();
-    });
+    document.getElementById('topicFilter').addEventListener('change', event => { activeTopic = event.target.value; update(); });
 })();
 </script>
 }
