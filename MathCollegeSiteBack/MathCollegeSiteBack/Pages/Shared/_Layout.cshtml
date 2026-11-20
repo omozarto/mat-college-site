@@ -81,6 +81,8 @@
                 const mood = widget.dataset.mood || 'idle';
                 const bob = (mood === 'happy' ? (catFrame % 2 ? -1 : 0) : (catFrame % 4 === 0 ? -1 : 0));
                 const tailWag = mood === 'walking' ? (catFrame % 2 ? 2 : -1) : [0, 0, 1, 1, 0, -1, -1, 0][catFrame % 8];
+                const blinking = mood !== 'happy' && catFrame % 34 === 0;
+                const step = mood === 'walking' ? (catFrame % 2 ? 1 : -1) : 0;
                 pixelContext.clearRect(0, 0, 40, 40);
                 pixelContext.save(); pixelContext.translate(0, bob);
                 // Fluffy tail, shown behind the body.
@@ -92,11 +94,11 @@
                 bands([[27,13,26],[28,10,29],[29,9,30],[30,10,29],[31,11,28],[32,11,28],[33,12,27]], 'hoodie');
                 bands([[27,13,14],[28,11,12],[29,10,10]], 'hoodLight');
                 bands([[28,27,28],[29,29,29],[30,30,30]], 'hoodLight');
-                bands([[34,12,17],[35,11,18],[36,12,17],[37,13,16]], 'outline');
-                bands([[34,13,17],[35,12,18],[36,13,17]], 'fur');
-                bands([[34,22,27],[35,21,28],[36,22,27],[37,23,26]], 'outline');
-                bands([[34,23,27],[35,22,28],[36,23,27]], 'fur');
-                bands([[35,14,16],[35,24,26]], 'light');
+                bands([[34,12,17],[35,11,18],[36,12,17],[37,13,16]].map(([y,left,right]) => [y,left + step,right + step]), 'outline');
+                bands([[34,13,17],[35,12,18],[36,13,17]].map(([y,left,right]) => [y,left + step,right + step]), 'fur');
+                bands([[34,22,27],[35,21,28],[36,22,27],[37,23,26]].map(([y,left,right]) => [y,left - step,right - step]), 'outline');
+                bands([[34,23,27],[35,22,28],[36,23,27]].map(([y,left,right]) => [y,left - step,right - step]), 'fur');
+                bands([[35,14 + step,16 + step],[35,24 - step,26 - step]], 'light');
                 // Pointed ears, built one pixel row at a time.
                 bands([[2,10,11],[3,9,12],[4,8,13],[5,7,14],[6,7,15],[7,6,16],[8,6,17],[9,6,18],[10,6,19]], 'outline');
                 bands([[2,10,10],[3,10,11],[4,9,12],[5,9,12],[6,8,13],[7,8,14],[8,7,14],[9,7,15]], 'fur');
@@ -112,7 +114,7 @@
                 bands([[16,5,7],[17,4,6],[18,4,7],[19,5,7]], 'mid');
                 bands([[16,33,35],[17,34,36],[18,33,36],[19,33,35]], 'shade');
                 // Face marks and eyebrows.
-                if (mood === 'happy') {
+                if (mood === 'happy' || blinking) {
                     bands([[14,11,12],[13,12,14],[14,15,16],[14,23,24],[13,25,27],[14,28,29]], 'outline');
                 } else {
                     bands([[13,11,15],[12,12,14],[12,24,26],[13,23,27]], mood === 'worried' ? 'outline' : 'shade');
