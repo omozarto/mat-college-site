@@ -28,7 +28,9 @@ public sealed record TeacherTaskDetails(
     decimal NumericTolerance,
     IReadOnlyList<TeacherTaskOption> Options);
 public sealed record LessonListItem(int Id, int TopicId, string Title, string Summary, int TaskCount);
-public sealed record LessonDetails(int Id, int TopicId, string Title, string Summary, string Content, int TaskCount);
+public sealed record LessonContentBlock(string Kind, string Title, string Text);
+public sealed record LessonDetails(int Id, int TopicId, string Title, string Summary, string Content, int TaskCount,
+    IReadOnlyList<LessonContentBlock>? ContentBlocks = null, string VisualKind = "steps");
 public sealed record LessonRunSummary(
     int RunId,
     int LessonId,
@@ -56,7 +58,9 @@ public sealed record CurrentTaskResponse(
     int Attempts,
     bool ExplanationRequired,
     string? ExplanationTitle,
-    string? Explanation);
+    string? Explanation,
+    IReadOnlyList<string>? SolutionSteps = null,
+    string VisualKind = "steps");
 public sealed record AnswerResponse(
     bool IsCorrect,
     bool LessonRestarted,
