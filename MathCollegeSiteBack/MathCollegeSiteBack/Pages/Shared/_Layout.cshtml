@@ -71,6 +71,8 @@
             const speech = document.getElementById('quantSpeech');
             const actions = document.getElementById('quantActions');
             const questions = document.getElementById('quantQuestions');
+            const questionInput = document.getElementById('quantQuestionInput');
+            const chatForm = document.getElementById('quantChatForm');
             const catImage = document.getElementById('quantPixelCat');
             const catSprites = {
                 idle: '/images/quant-idle.png',
@@ -92,12 +94,134 @@
             };
             const route = location.pathname.toLowerCase();
             const defaultMessage = defaults[route] || defaults['/'];
-            const questionAnswers = [
-                { label: 'Объясни проще', answer: () => route === '/task' ? `Давай разложим «${document.getElementById('lessonTitle')?.textContent || 'эту тему'}» на маленькие шаги: сначала поймём идею, затем выберем правило и проверим его на примере.` : 'Начнём с главной идеи, а потом проверим её на маленьком примере. Какое место кажется самым запутанным?', mood: 'curious' },
-                { label: 'Как решать задачу?', answer: () => 'Сначала выпиши, что известно и что требуется найти. Потом выбери подходящее правило, подставь данные и проверь, разумен ли ответ.', mood: 'thinking' },
-                { label: 'Что делать дальше?', answer: () => route === '/themes' ? 'Выбери ближайший урок на дорожке. Пройденные занятия можно повторять в любое время.' : route === '/task' ? 'Закончи текущий пример, а я помогу разобрать ошибку. Потом перейдём к следующему шагу.' : 'Открой «Темы», чтобы выбрать урок, или «Задания», если хочешь сразу потренироваться.', mood: 'happy' },
-                { label: 'Зачем здесь схема?', answer: () => 'Схема показывает, какие части задачи складываются в ответ. Сначала попробуй объяснить её своими словами — так формула станет понятнее.', mood: 'surprised' }
-            ];
+            let tutorContext = {
+                route,
+                pageTitle: document.querySelector('h1')?.textContent?.trim() || 'VARIQ',
+                pageText: document.querySelector('main')?.innerText?.slice(0, 1800) || ''
+            };
+            const normalize = value => String(value || '').toLowerCase().replaceAll('ё', 'е').replace(/[^а-яa-z0-9]+/gi, ' ').trim();
+            const includesAny = (value, words) => words.some(word => value.includes(word));
+            const findRelevantPassage = (question, source) => {
+                const ignored = new Set(['это','как','что','где','когда','почему','покажи','объясни','тема','этот','эта','здесь','задача','пример','мне','можно','будет','равно','about','this','that']);
+                const words = normalize(question).split(' ').filter(word => word.length > 2 && !ignored.has(word));
+                const passages = String(source || '').split(/(?<=[.!?])\s+|\r?\n/).map(text => text.trim()).filter(text => text.length > 18);
+                let best = { score: 0, text: '' };
+                for (const passage of passages) {
+                    const candidate = normalize(passage);
+                    const score = words.reduce((total, word) => total + (candidate.includes(word) ? word.length > 5 ? 2 : 1 : 0), 0);
+                    if (score > best.score) best = { score, text: passage };
+                }
+                return best.score > 0 ? best.text : '';
+            };
+            const currentTaskHint = prompt => {
+                const text = normalize(prompt);
+                if (includesAny(text, ['условн', 'байес', 'известно что'])) return 'Сначала зафиксируй условие: рассматриваем только случаи, где уже произошло B. Затем посчитай, какая доля этих случаев подходит событию A.';
+                if (includesAny(text, ['сочетан', 'команд', 'выбрать из', 'сколько способов'])) return 'Сначала спроси себя, меняет ли порядок выбор. Для команды из тех же людей порядок не важен; для разных должностей — важен.';
+                if (includesAny(text, ['частот', 'сколько раз', 'броск'])) return 'Найди два числа в условии: сколько раз событие произошло и сколько всего было опытов. Частота — первое число, делённое на второе.';
+                if (includesAny(text, ['средн', 'медиан', 'мод'])) return 'Выпиши все значения. Для среднего сложи их и раздели на количество; для медианы сначала расположи по порядку.';
+                if (includesAny(text, ['независ', 'оба событ'])) return 'Проверь, меняет ли первый исход вероятность второго. Только при независимости для совместного события можно перемножить вероятности.';
+                if (includesAny(text, ['кубик', 'монет', 'вероят', 'шанс', 'исход'])) return 'Сначала перечисли все равновозможные исходы, затем отметь подходящие. Искомая вероятность — подходящие исходы, делённые на все.';
+                return 'Подчеркни в условии данные и отдельно запиши вопрос. Затем выбери правило, которое связывает именно эти величины. Какое слово или число в условии кажется главным?';
+            };
+            const localAnswer = rawQuestion => {
+                const question = normalize(rawQuestion);
+                const lesson = tutorContext.lesson || {};
+                const task = tutorContext.task || null;
+                const has = (...words) => includesAny(question, words);
+
+                if (task && tutorContext.route === '/task') {
+                    if (has('ошиб', 'неправ', 'не получилось', 'почему не')) {
+                        return { text: tutorContext.lastExplanation
+                            ? `Разберём именно это задание «${task.prompt}». ${tutorContext.lastExplanation}`
+                            : `Ошибки пока нет — давай предупредим её. ${currentTaskHint(task.prompt)}`, mood: 'thinking' };
+                    }
+                    if (has('формул', 'правил', 'обознач', 'символ')) {
+                        const formula = lesson.formulaBlock || lesson.coreIdea;
+                        return { text: formula ? `Для темы «${lesson.title}» главное правило такое: ${formula}` : currentTaskHint(task.prompt), mood: 'curious' };
+                    }
+                    if (has('пример', 'похож', 'покажи')) {
+                        return { text: lesson.exampleBlock
+                            ? `Вот пример из этого урока: ${lesson.exampleBlock}`
+                            : `Для задания «${task.prompt}» начни так: ${currentTaskHint(task.prompt)}`, mood: 'happy' };
+                    }
+                    if (has('граф', 'схем', 'рисунк', 'визуал')) {
+                        return { text: lesson.visualBlock || `Схема для задания «${task.prompt}» показывает, как связаны данные. ${currentTaskHint(task.prompt)}`, mood: 'curious' };
+                    }
+                    const passage = findRelevantPassage(rawQuestion, [lesson.summary, tutorContext.pageText, task.prompt, tutorContext.lastExplanation].filter(Boolean).join('\n'));
+                    if (passage) return { text: `В этом уроке это объясняется так: «${passage}» ${currentTaskHint(task.prompt)}`, mood: 'thinking' };
+                    if (has('ответ', 'решен', 'объясни', 'объясн', 'разбер', 'почему', 'понят')) {
+                        return { text: tutorContext.lastExplanation
+                            ? `Пойдём по шагам для задания «${task.prompt}». ${tutorContext.lastExplanation}`
+                            : `Не буду отнимать у тебя решение 🙂 Для задания «${task.prompt}» вот первый шаг: ${currentTaskHint(task.prompt)}`, mood: 'thinking' };
+                    }
+                    if (has('дальше', 'следующ', 'попыт', 'сколько')) return { text: `Сейчас задание ${task.taskOrder} из ${task.taskCount}. ${task.attempts ? `Ты уже использовал(а) ${task.attempts} попытку. ` : ''}Если ответ не получится, сначала разберём ход решения, и я подскажу, на что смотреть.`, mood: 'happy' };
+                    return { text: `Сейчас мы изучаем «${lesson.title || tutorContext.pageTitle}», а на экране задание: «${task.prompt}». ${currentTaskHint(task.prompt)}`, mood: 'curious' };
+                }
+
+                if (tutorContext.route === '/task') {
+                    if (has('формул', 'правил')) return { text: lesson.formulaBlock || lesson.coreIdea || 'В этом уроке пока нет отдельной формулы. Я могу разобрать основную идею или пример.', mood: 'curious' };
+                    if (has('пример', 'похож')) return { text: lesson.exampleBlock || lesson.coreIdea || 'Давай сначала прочитаем главную идею урока, а затем начнём практику.', mood: 'happy' };
+                    if (has('схем', 'граф', 'визуал')) return { text: lesson.visualBlock || lesson.coreIdea || `На схеме показана тема «${lesson.title || tutorContext.pageTitle}».`, mood: 'curious' };
+                    if (has('ошиб', 'пересдач')) return { text: 'Сначала спокойно прочитай условие и попробуй решить. Если ответ будет неверным, разберём именно этот пример и найдём место, где сбился ход мысли.', mood: 'thinking' };
+                    return { text: lesson.coreIdea || `Мы готовим урок «${lesson.title || tutorContext.pageTitle}». Спроси меня про формулу, пример или схему.`, mood: 'curious' };
+                }
+
+                if (has('огон', 'серия', 'день')) return { text: 'Огонёк загорается после того, как решены все задания урока. Повторные попытки не мешают его зажечь; рейтинг урока учитывает, сколько раз пришлось пересдавать.', mood: 'happy' };
+                if (has('независ', 'байес', 'сочетан', 'мат ожид', 'дисперс', 'частот', 'вероят')) {
+                    const term = ['независ', 'байес', 'сочетан', 'математическ', 'дисперс', 'частот', 'вероят'].find(word => question.includes(word));
+                    const index = tutorContext.pageText.toLowerCase().indexOf(term || '');
+                    const match = index >= 0 ? tutorContext.pageText.slice(Math.max(0, index - 90), index + 210) : null;
+                    return { text: match ? `На этой странице есть подсказка: ${match}` : 'Для равновозможных исходов вероятность события равна числу подходящих исходов, делённому на число всех исходов. Напиши конкретную тему — объясню на примере.', mood: 'thinking' };
+                }
+                if (tutorContext.route === '/themes') return { text: has('дальше', 'выбрать', 'открыть') ? 'На дорожке подсвечен удобный следующий шаг. Пройденные уроки тоже доступны: открывай их, если хочешь повторить тему.' : 'Каждая глава объединяет уроки по одной теме. Открой главу и выбери урок; пройденные занятия можно повторять.', mood: 'happy' };
+                if (tutorContext.route === '/lab') {
+                    if (has('кубик', 'семерк', '7', 'сумм')) return { text: 'У двух кубиков 36 равновозможных пар. Сумму 7 дают пары 1+6, 2+5, 3+4 и обратные им — всего 6 способов. Поэтому шанс равен 6/36 = 1/6.', mood: 'thinking' };
+                    if (has('монет', 'орел', 'решк')) return { text: 'Для честной монеты шанс орла равен 1/2. В короткой серии доля может заметно отклониться, поэтому сравнивай результат на 10, 100 и 1 000 бросках.', mood: 'curious' };
+                    if (has('двер', 'монти')) return { text: 'В задаче Монти Холла первый выбор выигрывает с шансом 1/3. Если сменить дверь, выигрываешь в двух случаях из трёх: когда первая дверь скрывала козу.', mood: 'surprised' };
+                    if (has('крив', 'средн', 'разброс', 'сигм')) return { text: 'Среднее двигает центр кривой. Разброс меняет её ширину: чем он больше, тем ниже и шире распределение.', mood: 'thinking' };
+                    return { text: 'Сначала сделай прогноз, затем запусти опыт. График покажет наблюдаемую частоту рядом с теоретической вероятностью.', mood: 'curious' };
+                }
+                const relevant = findRelevantPassage(rawQuestion, tutorContext.pageText);
+                if (relevant) return { text: `Вот что нашёл на странице «${tutorContext.pageTitle}»: «${relevant}»`, mood: 'thinking' };
+                return { text: `Ты сейчас на странице «${tutorContext.pageTitle}». ${tutorContext.pageText.slice(0, 250)} Если спросишь про формулу, игру или конкретный факт, я отвечу по содержимому этой страницы.`, mood: 'curious' };
+            };
+            const questionShortcuts = () => {
+                if (route === '/task') return [
+                    { label: 'Подскажи первый шаг', question: 'Какой первый шаг в этой задаче?' },
+                    { label: 'Объясни формулу', question: 'Объясни формулу этой темы' },
+                    { label: tutorContext.lastExplanation ? 'Разбери мою ошибку' : 'Покажи пример', question: tutorContext.lastExplanation ? 'Объясни мою ошибку' : 'Покажи пример по этой теме' }
+                ];
+                if (route === '/themes') return [
+                    { label: 'Что открыть дальше?', question: 'Какой урок мне открыть дальше?' },
+                    { label: 'Можно повторить?', question: 'Можно повторить пройденный урок?' }
+                ];
+                if (route === '/lab') return [
+                    { label: 'Почему сумма 7 частая?', question: 'Почему сумма 7 выпадает чаще?' },
+                    { label: 'Объясни эксперимент', question: 'Что показывает этот эксперимент?' }
+                ];
+                if (route === '/practice') return [
+                    { label: 'Как выбрать урок?', question: 'Как выбрать урок для практики?' },
+                    { label: 'Зачем пересдачи?', question: 'Что делать, если ответ неправильный?' }
+                ];
+                return [
+                    { label: 'Объясни это проще', question: 'Объясни эту тему проще' },
+                    { label: 'Приведи пример', question: 'Приведи пример с этой страницы' }
+                ];
+            };
+            const renderQuestionShortcuts = () => {
+                questions.replaceChildren();
+                questionShortcuts().forEach(item => {
+                    const button = document.createElement('button'); button.type = 'button'; button.textContent = item.label; button.dataset.question = item.question;
+                    questions.appendChild(button);
+                });
+            };
+            const answerQuestion = rawQuestion => {
+                const question = String(rawQuestion || '').trim(); if (!question) return;
+                const response = localAnswer(question);
+                window.clearTimeout(window.quantSpeechTimer);
+                say(response.text, response.mood);
+                if (questionInput) questionInput.value = '';
+            };
             const setMood = mood => {
                 const expression = catSprites[mood] ? mood : 'idle';
                 widget.dataset.mood = expression;
@@ -114,25 +238,30 @@
                     actions.appendChild(button);
                 }
                 actions.hidden = choices.length === 0;
-                questions.replaceChildren();
-                questionAnswers.forEach(question => {
-                    const button = document.createElement('button');
-                    button.type = 'button'; button.textContent = question.label;
-                    button.addEventListener('click', () => say(question.answer(), question.mood));
-                    questions.appendChild(button);
-                });
+                renderQuestionShortcuts();
                 bubble.hidden = false;
                 toggle.setAttribute('aria-expanded', 'true');
                 window.clearTimeout(window.quantSpeechTimer);
-                if (!choices.length) window.quantSpeechTimer = window.setTimeout(() => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); }, 11000);
+                if (!choices.length) window.quantSpeechTimer = window.setTimeout(() => {
+                    if (bubble.contains(document.activeElement) || bubble.matches(':hover')) return;
+                    bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle');
+                }, 18000);
             };
             toggle?.addEventListener('click', () => {
-                if (bubble.hidden) say(defaultMessage, ['happy', 'curious', 'surprised'][Math.floor(Math.random() * 3)]);
+                if (bubble.hidden) say(`${defaultMessage} Можешь написать вопрос в поле ниже — я отвечу по открытой странице.`, ['happy', 'curious', 'surprised'][Math.floor(Math.random() * 3)]);
                 else { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); }
             });
             document.getElementById('quantClose')?.addEventListener('click', () => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); });
+            chatForm?.addEventListener('submit', event => { event.preventDefault(); answerQuestion(questionInput?.value); });
+            questionInput?.addEventListener('focus', () => window.clearTimeout(window.quantSpeechTimer));
+            questions?.addEventListener('click', event => { const shortcut=event.target.closest('button'); if(shortcut) answerQuestion(shortcut.dataset.question || shortcut.textContent); });
             setMood('idle');
-            window.VariqCat = { say, setMood, close: () => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); } };
+            renderQuestionShortcuts();
+            window.VariqCat = {
+                say, setMood, ask: answerQuestion,
+                setContext: values => { tutorContext = { ...tutorContext, ...values, route }; renderQuestionShortcuts(); },
+                close: () => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); }
+            };
             document.addEventListener('click', event => {
                 const prompt = event.target.closest('[data-quant-say]');
                 if (prompt) say(prompt.dataset.quantSay, 'happy');

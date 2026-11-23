@@ -3,7 +3,14 @@
         <div class="quant-bubble-head"><strong>Квант</strong><button type="button" id="quantClose" aria-label="Свернуть Кванта">×</button></div>
         <p id="quantSpeech">Привет! Я Квант. Вместе разберёмся даже со сложной вероятностью.</p>
         <div id="quantActions" class="quant-actions" hidden></div>
-        <p class="quant-ask-label">Спроси меня</p>
+        <form class="quant-chat-form" id="quantChatForm">
+            <label class="quant-ask-label" for="quantQuestionInput">Задай вопрос Кванту</label>
+            <div class="quant-chat-entry">
+                <input id="quantQuestionInput" name="question" type="text" maxlength="300" placeholder="Например: как решить это задание?" autocomplete="off" />
+                <button id="quantAskButton" type="submit" aria-label="Отправить вопрос">↗</button>
+            </div>
+        </form>
+        <p class="quant-suggest-label">Или выбери подсказку</p>
         <div id="quantQuestions" class="quant-questions"></div>
     </div>
     <button class="quant-companion" id="quantToggle" type="button" aria-label="Поговорить с котиком Квантом" aria-expanded="false">

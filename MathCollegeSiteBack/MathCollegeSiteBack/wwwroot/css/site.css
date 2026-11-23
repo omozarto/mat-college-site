@@ -457,6 +457,27 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     .lab-page .lab-grid { grid-template-columns:1fr; }
     .dice-game-callout { align-items:flex-start;flex-direction:column;gap:4px; }.dice-game-callout b { margin-left:0; }
 }
+
+/* The companion is a real local tutor: free text first, optional prompts second. */
+.quant-bubble { width: min(370px, calc(100vw - 16px)); padding: 17px; }
+.quant-bubble-head { font-size: 13px; }
+.quant-bubble > p#quantSpeech { margin-top: 9px; color: #e2dced; font-size: 13px; line-height: 1.7; }
+.quant-chat-form { margin-top: 12px; }
+.quant-ask-label { margin: 0 0 6px; color: #aa9ad8; font-size: 9px; letter-spacing: .13em; }
+.quant-chat-entry { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) 40px; gap: 7px; }
+.quant-chat-entry input { width: 100%; min-width: 0; min-height: 42px; padding: 9px 12px; border: 1px solid rgba(174,151,255,.27); border-radius: 12px; color: #f1edfb; background: rgba(8,8,22,.8); font-size: 12px; }
+.quant-chat-entry input::placeholder { color: #827a98; }
+.quant-chat-entry input:focus { border-color: #a58aff; outline: 2px solid rgba(165,138,255,.2); }
+.quant-chat-entry button { min-height: 42px; border: 1px solid rgba(184,157,255,.3); border-radius: 12px; color: white; background: linear-gradient(145deg,#8c6ee2,#654bb5); font-size: 20px; font-weight: 800; cursor: pointer; }
+.quant-chat-entry button:hover { filter: brightness(1.14); }
+.quant-suggest-label { margin: 12px 0 6px; color: #9188a5; font-size: 9px; }
+.quant-questions { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+.quant-questions button { min-height: 34px; padding: 7px 9px; overflow-wrap: anywhere; font-size: 10px; line-height: 1.35; }
+@media(max-width:700px) {
+    .quant-bubble { width: min(370px,calc(100vw - 16px)); padding: 13px; }
+    .quant-bubble > p#quantSpeech { font-size: 12px; }
+    .quant-chat-entry input { font-size: 12px; }
+}
 @media (max-width: 390px) { .quant-widget { width: 88px; }.quant-companion { width: 82px; min-height: 101px; }.quant-cat { width: 80px; height: 86px; } }
 .quant-brows { transform-box: fill-box; transform-origin: center; transition: transform .25s; }.quant-widget[data-mood="worried"] .quant-brows { transform: translateY(3px) rotate(5deg); }.quant-widget[data-mood="thinking"] .quant-brows { transform: translateY(3px); }.quant-widget[data-mood="happy"] .quant-eyes { animation: quant-smile .6s ease-in-out 2; }.quant-widget[data-mood="talking"] .quant-tail { animation-duration: .8s; }
 @keyframes quant-smile { 50% { transform: scaleY(.14); } }

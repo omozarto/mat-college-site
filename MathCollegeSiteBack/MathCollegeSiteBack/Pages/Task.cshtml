@@ -121,6 +121,7 @@
 
     let runId = null;
     let currentTask = null;
+    let lessonTutorContext = {};
     let restartPending = false;
     let explanationAction = null;
 
@@ -341,6 +342,23 @@
             lessonTitle.textContent = lesson.title;
             lessonSummary.textContent = lesson.summary;
             renderLessonContent(lesson.content, lesson.contentBlocks || [], lesson.visualKind || "steps");
+            const blocks = lesson.contentBlocks || [];
+            lessonTutorContext = {
+                pageTitle: lesson.title,
+                pageText: lesson.content,
+                lesson: {
+                    title: lesson.title,
+                    summary: lesson.summary,
+                    coreIdea: blocks.find(block => block.kind === "idea")?.text,
+                    formulaBlock: blocks.find(block => block.kind === "formula")?.text,
+                    exampleBlock: blocks.find(block => block.kind === "example")?.text,
+                    visualBlock: blocks.find(block => block.kind === "visual")?.text,
+                    visualKind: lesson.visualKind
+                },
+                task: null,
+                lastExplanation: null
+            };
+            window.VariqCat?.setContext(lessonTutorContext);
             hide(statusMessage);
             show(lessonIntro);
         } catch (error) {
@@ -373,20 +391,26 @@
         }
     }
 
-    async function loadCurrentTask() {
+    async function loadCurrentTask(keepCatOpen = false) {
         if (!runId) {
             return;
         }
 
         hide(explanationPanel);
-        window.VariqCat?.close();
+        if (!keepCatOpen) window.VariqCat?.close();
         answerOptions.replaceChildren();
         numberAnswer.value = "";
         currentTask = null;
+        window.VariqCat?.setContext({ ...lessonTutorContext, task: null, lastExplanation: null });
 
         try {
             const task = await api(`/api/runs/${runId}/current`);
             currentTask = task;
+            window.VariqCat?.setContext({
+                ...lessonTutorContext,
+                task: { prompt: task.prompt, taskOrder: task.taskOrder, taskCount: task.taskCount, attempts: task.attempts },
+                lastExplanation: task.explanationRequired ? task.explanation : null
+            });
 
             taskPrompt.textContent = task.prompt;
             renderDiagram(taskVisual, task.visualKind || "steps", "Схема перед решением", "Отметь известные данные, найди нужную связь и только потом считай.");
@@ -403,6 +427,7 @@
                     "Я прочитал(а), попробовать ещё раз",
                     () => markExplanationViewed(task.taskId), task.visualKind || "steps", task.solutionSteps || null
                 );
+                window.VariqCat?.ask("Объясни мою ошибку");
                 return;
             }
 
@@ -435,6 +460,7 @@
 
             show(taskSection);
             setStatus("");
+            if (task.taskOrder === 1 && task.attempts === 0) window.VariqCat?.ask("Подскажи первый шаг");
         } catch (error) {
             hide(taskSection);
 
@@ -467,6 +493,7 @@
             method: "POST"
         });
 
+        window.VariqCat?.close();
         await loadCurrentTask();
     }
 
@@ -524,17 +551,24 @@
 
             if (!result.isCorrect) {
                 setStatus(result.message, true);
+                window.VariqCat?.setContext({
+                    ...lessonTutorContext,
+                    task: { prompt: currentTask.prompt, taskOrder: currentTask.taskOrder, taskCount: currentTask.taskCount, attempts: currentTask.attempts + 1 },
+                    lastExplanation: result.explanation || null
+                });
                 displayExplanation(
                     result.explanationTitle || "Разбор задания",
                     result.explanation || "",
                     "Я прочитал(а), попробовать ещё раз",
                     () => markExplanationViewed(currentTask.taskId), currentTask.visualKind || "steps", currentTask.solutionSteps || null
                 );
+                window.VariqCat?.ask("Объясни мою ошибку");
                 return;
             }
 
-            setStatus(result.message);
-            await loadCurrentTask();
+            setStatus("");
+            window.VariqCat?.say(`Верно! В задании «${currentTask.prompt}» ты нашёл(ла) нужный ход. Сохраним этот способ и применим его дальше.`, "happy");
+            await loadCurrentTask(true);
         } catch (error) {
             setStatus(error.message, true);
         }
