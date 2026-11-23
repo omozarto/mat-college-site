@@ -84,6 +84,14 @@ public static partial class DatabaseInitializer
             lesson.IsPublished = true;
             await db.SaveChangesAsync();
         }
+        else if (lesson.Content.Contains("Сначала выпиши известные данные и искомую величину.", StringComparison.Ordinal)
+            && lesson.Content.Contains("Умей своими словами объяснить основное понятие", StringComparison.Ordinal))
+        {
+            // Обновляем только старый автоматически созданный шаблон объяснения.
+            // Тексты, которые преподаватель редактировал вручную, остаются нетронутыми.
+            lesson.Content = seed.Content;
+            await db.SaveChangesAsync();
+        }
 
         var taskSeeds = seed.Tasks.ToList();
         var nextOrder = taskSeeds.Count == 0 ? 1 : taskSeeds.Max(x => x.Order) + 1;
