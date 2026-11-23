@@ -1,4 +1,5 @@
 using MathCollegeSiteBack.Contracts;
+using MathCollegeSiteBack.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,10 +26,11 @@ public sealed class LessonsController(AppDbContext db) : ControllerBase
     {
         var lesson = await db.Lessons.AsNoTracking()
             .Where(x => x.Id == lessonId && x.IsPublished && x.Topic.IsPublished)
-            .Select(x => new LessonDetails(x.Id, x.TopicId, x.Title, x.Summary, x.Content, x.Tasks.Count))
             .SingleOrDefaultAsync(cancellationToken);
 
-        return lesson is null ? NotFound() : Ok(lesson);
+        return lesson is null ? NotFound() : Ok(new LessonDetails(lesson.Id, lesson.TopicId, lesson.Title,
+            lesson.Summary, lesson.Content, await db.LessonTasks.CountAsync(x => x.LessonId == lesson.Id, cancellationToken),
+            LessonPresentation.BuildBlocks(lesson.Content), LessonPresentation.VisualKind(lesson.Content)));
     }
 
     [HttpPost("{lessonId:int}/start")]
@@ -89,7 +91,8 @@ public sealed class LessonsController(AppDbContext db) : ControllerBase
         db.Lessons.Add(lesson);
         await db.SaveChangesAsync(cancellationToken);
         return CreatedAtAction(nameof(GetLesson), new { lessonId = lesson.Id },
-            new LessonDetails(lesson.Id, lesson.TopicId, lesson.Title, lesson.Summary, lesson.Content, 0));
+            new LessonDetails(lesson.Id, lesson.TopicId, lesson.Title, lesson.Summary, lesson.Content, 0,
+                LessonPresentation.BuildBlocks(lesson.Content), LessonPresentation.VisualKind(lesson.Content)));
     }
 
     [HttpPut("{lessonId:int}")]

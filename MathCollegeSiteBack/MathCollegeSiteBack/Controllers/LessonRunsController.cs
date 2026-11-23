@@ -79,7 +79,9 @@ public sealed class LessonRunsController(AppDbContext db) : ControllerBase
             attemptCount,
             explanationAvailable && lastInteraction!.ExplanationViewedAtUtc is null,
             explanationAvailable ? variant.ExplanationTitle : null,
-            explanationAvailable ? variant.Explanation : null));
+            explanationAvailable ? variant.Explanation : null,
+            explanationAvailable ? LessonPresentation.BuildSolutionSteps(variant.Explanation) : [],
+            LessonPresentation.VisualKind(variant.Prompt + " " + variant.Explanation)));
     }
 
     [HttpPost("{runId:int}/tasks/{taskId:int}/answer")]
