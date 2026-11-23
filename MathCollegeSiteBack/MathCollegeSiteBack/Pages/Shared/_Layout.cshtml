@@ -70,6 +70,7 @@
             const bubble = document.getElementById('quantBubble');
             const speech = document.getElementById('quantSpeech');
             const actions = document.getElementById('quantActions');
+            const questions = document.getElementById('quantQuestions');
             const catImage = document.getElementById('quantPixelCat');
             const catSprites = {
                 idle: '/images/quant-idle.png',
@@ -91,6 +92,12 @@
             };
             const route = location.pathname.toLowerCase();
             const defaultMessage = defaults[route] || defaults['/'];
+            const questionAnswers = [
+                { label: 'Объясни проще', answer: () => route === '/task' ? `Давай разложим «${document.getElementById('lessonTitle')?.textContent || 'эту тему'}» на маленькие шаги: сначала поймём идею, затем выберем правило и проверим его на примере.` : 'Начнём с главной идеи, а потом проверим её на маленьком примере. Какое место кажется самым запутанным?', mood: 'curious' },
+                { label: 'Как решать задачу?', answer: () => 'Сначала выпиши, что известно и что требуется найти. Потом выбери подходящее правило, подставь данные и проверь, разумен ли ответ.', mood: 'thinking' },
+                { label: 'Что делать дальше?', answer: () => route === '/themes' ? 'Выбери ближайший урок на дорожке. Пройденные занятия можно повторять в любое время.' : route === '/task' ? 'Закончи текущий пример, а я помогу разобрать ошибку. Потом перейдём к следующему шагу.' : 'Открой «Темы», чтобы выбрать урок, или «Задания», если хочешь сразу потренироваться.', mood: 'happy' },
+                { label: 'Зачем здесь схема?', answer: () => 'Схема показывает, какие части задачи складываются в ответ. Сначала попробуй объяснить её своими словами — так формула станет понятнее.', mood: 'surprised' }
+            ];
             const setMood = mood => {
                 const expression = catSprites[mood] ? mood : 'idle';
                 widget.dataset.mood = expression;
@@ -107,13 +114,20 @@
                     actions.appendChild(button);
                 }
                 actions.hidden = choices.length === 0;
+                questions.replaceChildren();
+                questionAnswers.forEach(question => {
+                    const button = document.createElement('button');
+                    button.type = 'button'; button.textContent = question.label;
+                    button.addEventListener('click', () => say(question.answer(), question.mood));
+                    questions.appendChild(button);
+                });
                 bubble.hidden = false;
                 toggle.setAttribute('aria-expanded', 'true');
                 window.clearTimeout(window.quantSpeechTimer);
-                if (!choices.length) window.quantSpeechTimer = window.setTimeout(() => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); }, 6500);
+                if (!choices.length) window.quantSpeechTimer = window.setTimeout(() => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); }, 11000);
             };
             toggle?.addEventListener('click', () => {
-                if (bubble.hidden) say(defaultMessage, 'happy');
+                if (bubble.hidden) say(defaultMessage, ['happy', 'curious', 'surprised'][Math.floor(Math.random() * 3)]);
                 else { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); }
             });
             document.getElementById('quantClose')?.addEventListener('click', () => { bubble.hidden = true; toggle.setAttribute('aria-expanded', 'false'); setMood('idle'); });

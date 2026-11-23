@@ -19,6 +19,7 @@
             <h2>Объяснение темы</h2>
             <div class="lesson-learning-path" aria-hidden="true"><span>Идея</span><i></i><span>Формула</span><i></i><span>Пример</span><i></i><span>Практика</span></div>
             <div id="lessonContent" class="lesson-content"></div>
+            <div id="lessonVisual" class="learning-visual"></div>
         </div>
 
         <button id="startButton" class="lesson-button" type="button">
@@ -30,6 +31,7 @@
         <div class="task-topline"><p id="taskProgress"></p><span class="task-score-chip">✦ <span id="liveScore">0</span> баллов</span></div>
         <div class="task-progress-track" aria-label="Прогресс заданий"><i id="taskProgressFill"></i></div>
         <h2 id="taskPrompt"></h2>
+        <div id="taskVisual" class="task-visual learning-visual"></div>
 
         <div id="answerOptions"></div>
 
@@ -50,6 +52,7 @@
     <section id="explanationPanel" class="explanation-box hidden">
         <h2 id="explanationTitle"></h2>
         <p id="explanationText" class="lesson-content"></p>
+        <div id="solutionVisual" class="learning-visual"></div>
         <button id="explanationContinueButton" class="lesson-button" type="button">
             Продолжить
         </button>
@@ -78,6 +81,7 @@
     const lessonTitle = document.getElementById("lessonTitle");
     const lessonSummary = document.getElementById("lessonSummary");
     const lessonContent = document.getElementById("lessonContent");
+    const lessonVisual = document.getElementById("lessonVisual");
     const startButton = document.getElementById("startButton");
 
     const taskSection = document.getElementById("taskSection");
@@ -85,6 +89,7 @@
     const taskProgressFill = document.getElementById("taskProgressFill");
     const liveScore = document.getElementById("liveScore");
     const taskPrompt = document.getElementById("taskPrompt");
+    const taskVisual = document.getElementById("taskVisual");
     const answerOptions = document.getElementById("answerOptions");
     const numberAnswer = document.getElementById("numberAnswer");
     const submitAnswerButton = document.getElementById("submitAnswerButton");
@@ -92,6 +97,7 @@
     const explanationPanel = document.getElementById("explanationPanel");
     const explanationTitle = document.getElementById("explanationTitle");
     const explanationText = document.getElementById("explanationText");
+    const solutionVisual = document.getElementById("solutionVisual");
     const explanationContinueButton =
         document.getElementById("explanationContinueButton");
 
@@ -121,7 +127,7 @@
         if (message) window.VariqCat?.say(message, isError ? "worried" : "happy");
     }
 
-    function renderLessonContent(content) {
+    function renderLessonContent(content, contentBlocks = [], visualKind = "steps") {
         const paragraphs = String(content || "").split(/\r?\n\s*\r?\n|\r?\n/).map(item => item.trim()).filter(Boolean);
         const sections = [
             { title: "Сначала — главная идея", icon: "✦", kind: "idea", labels: ["Основная идея"] },
@@ -132,18 +138,74 @@
             { title: "Короткий итог", icon: "✓", kind: "summary", labels: ["Итог урока", "Итог"] }
         ];
         lessonContent.replaceChildren();
-        paragraphs.forEach((paragraph, index) => {
+        const blocks = contentBlocks.length ? contentBlocks : paragraphs.map((paragraph, index) => {
             let descriptor = sections[index] || { title: "Ещё один важный шаг", icon: "✧", kind: "idea", labels: [] };
             for (const candidate of sections) {
                 const label = candidate.labels.find(value => paragraph.toLocaleLowerCase('ru-RU').startsWith(value.toLocaleLowerCase('ru-RU') + '.'));
                 if (label) { descriptor = candidate; paragraph = paragraph.slice(label.length + 1).trim(); break; }
             }
+            return { kind: descriptor.kind, title: descriptor.title, text: paragraph };
+        });
+        blocks.forEach((block, index) => {
+            const descriptor = sections.find(section => section.kind === block.kind) || sections[0];
             const card = document.createElement("article"); card.className = `lesson-content-card is-${descriptor.kind}`;
             const badge = document.createElement("span"); badge.className = "lesson-content-icon"; badge.textContent = descriptor.icon;
-            const heading = document.createElement("h3"); heading.textContent = descriptor.title;
-            const text = document.createElement("p"); text.textContent = paragraph;
+            const heading = document.createElement("h3"); heading.textContent = block.title || descriptor.title;
+            const text = document.createElement("p"); text.textContent = block.text || "";
             card.append(badge, heading, text); lessonContent.appendChild(card);
         });
+        lessonVisual.dataset.visualKind = visualKind;
+        renderDiagram(lessonVisual, visualKind, "Наглядная карта темы", "Схема помогает увидеть связи. Она иллюстрирует идею, а числа в задаче бери из условия.");
+    }
+
+    const svgNode = (name, attrs = {}, text = "") => {
+        const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+        Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+        if (text) node.textContent = text;
+        return node;
+    };
+
+    function renderDiagram(container, kind, title, caption) {
+        if (!container) return;
+        container.replaceChildren();
+        const figure = document.createElement("figure"); figure.className = `lesson-diagram diagram-${kind || "steps"}`;
+        const heading = document.createElement("figcaption");
+        const strong = document.createElement("strong"); strong.textContent = title;
+        const note = document.createElement("span"); note.textContent = caption;
+        heading.append(strong, note); figure.appendChild(heading);
+        const svg = svgNode("svg", { viewBox: "0 0 480 170", role: "img", "aria-label": title });
+        const defs = svgNode("defs");
+        const gradient = svgNode("linearGradient", { id: `diagram-gradient-${container.id}`, x1: "0", x2: "0", y1: "0", y2: "1" });
+        gradient.append(svgNode("stop", { offset: "0", "stop-color": "#ae91ff", "stop-opacity": ".72" }), svgNode("stop", { offset: "1", "stop-color": "#7352d4", "stop-opacity": ".12" }));
+        defs.appendChild(gradient); svg.appendChild(defs);
+        for (let y = 35; y <= 135; y += 50) svg.appendChild(svgNode("path", { d: `M36 ${y}H450`, class: "diagram-grid-line" }));
+        if (kind === "tree") {
+            [[95,85,210,50],[95,85,210,122],[210,50,340,32],[210,50,340,68],[210,122,340,104],[210,122,340,140]].forEach(([x1,y1,x2,y2]) => svg.appendChild(svgNode("path", { d: `M${x1} ${y1} L${x2} ${y2}`, class: "diagram-branch" })));
+            [[95,85,"Старт"],[210,50,"A"],[210,122,"B"],[340,32,"1"],[340,68,"2"],[340,104,"3"],[340,140,"4"]].forEach(([x,y,label]) => { svg.appendChild(svgNode("circle", { cx:x, cy:y, r:17, class:"diagram-node" })); svg.appendChild(svgNode("text", { x, y:Number(y)+4, "text-anchor":"middle", class:"diagram-label" }, label)); });
+        } else if (kind === "table") {
+            [[130,48,"Группа B"],[250,48,"Не B"],[130,96,"Событие A"],[250,96,"Не A"]].forEach(([x,y,label],i) => {
+                svg.appendChild(svgNode("rect", { x, y, width:112, height:39, rx:9, class:i===0?"diagram-cell is-active":"diagram-cell" }));
+                svg.appendChild(svgNode("text", { x:Number(x)+56,y:Number(y)+24,"text-anchor":"middle",class:"diagram-label" }, label));
+            });
+        } else if (kind === "chart") {
+            svg.appendChild(svgNode("path", { d:"M50 135H445M50 30V135", class:"diagram-axis" }));
+            const barHeights=[40,64,52,91,76,112,94,124];
+            barHeights.forEach((height,index)=>svg.appendChild(svgNode("rect",{x:75+index*44,y:135-height,width:25,height,rx:5,class:"diagram-bar"})));
+            svg.appendChild(svgNode("path",{d:"M68 92H440",class:"diagram-average"}));
+            svg.appendChild(svgNode("text",{x:440,y:85,"text-anchor":"end",class:"diagram-small-label"},"ориентир"));
+        } else if (kind === "probability") {
+            const cells = 10;
+            for (let i=0;i<cells;i++) svg.appendChild(svgNode("rect",{x:45+i*39,y:54,width:31,height:43,rx:8,class:i<4?"diagram-cell is-active":"diagram-cell"}));
+            svg.appendChild(svgNode("text",{x:45,y:125,class:"diagram-label"},"все возможные исходы"));
+            svg.appendChild(svgNode("text",{x:435,y:125,"text-anchor":"end",class:"diagram-label"},"часть из них подходит событию"));
+        } else {
+            [["Условие",65],["Правило",210],["Проверка",355]].forEach(([label,x],index)=>{
+                svg.appendChild(svgNode("rect",{x,y:57,width:105,height:54,rx:14,class:index===1?"diagram-node is-active":"diagram-node"}));
+                svg.appendChild(svgNode("text",{x:Number(x)+52,y:89,"text-anchor":"middle",class:"diagram-label"},label));
+                if(index<2) svg.appendChild(svgNode("path",{d:`M${Number(x)+108} 84h32m-8 -7 8 7 -8 7`,class:"diagram-branch"}));
+            });
+        }
+        figure.appendChild(svg); container.appendChild(figure);
     }
 
     async function api(url, options = {}) {
@@ -183,7 +245,7 @@
             const lesson = await api(`/api/lessons/${lessonId}`);
             lessonTitle.textContent = lesson.title;
             lessonSummary.textContent = lesson.summary;
-            renderLessonContent(lesson.content);
+            renderLessonContent(lesson.content, lesson.contentBlocks || [], lesson.visualKind || "steps");
             hide(statusMessage);
             show(lessonIntro);
         } catch (error) {
@@ -232,6 +294,7 @@
             currentTask = task;
 
             taskPrompt.textContent = task.prompt;
+            renderDiagram(taskVisual, task.visualKind || lessonVisual.dataset.visualKind || "steps", "Схема перед решением", "Отметь известные данные, найди нужную связь и только потом считай.");
             taskProgress.textContent =
                 `Задание ${task.taskOrder} из ${task.taskCount}. ` +
                 `Попытка ${task.attempts + 1} из 3.`;
@@ -243,7 +306,7 @@
                     task.explanationTitle || "Разбор задания",
                     task.explanation || "",
                     "Я прочитал(а), попробовать ещё раз",
-                    () => markExplanationViewed(task.taskId)
+                    () => markExplanationViewed(task.taskId), task.visualKind || "steps", task.solutionSteps || null
                 );
                 return;
             }
@@ -288,12 +351,16 @@
         }
     }
 
-    function displayExplanation(title, text, buttonText, action) {
+    function displayExplanation(title, text, buttonText, action, visualKind = "steps", solutionSteps = null) {
         explanationTitle.textContent = title;
         explanationText.replaceChildren();
-        String(text || "").split(/\r?\n\s*\r?\n|\r?\n/).map(item => item.trim()).filter(Boolean).forEach((paragraph, index) => {
-            const step = document.createElement("p"); step.className = "solution-step"; step.textContent = paragraph; explanationText.appendChild(step);
+        const steps = solutionSteps?.length ? solutionSteps : String(text || "").split(/(?<=[.!?])\s+|\r?\n/).map(item => item.trim()).filter(Boolean);
+        steps.forEach((paragraph, index) => {
+            const step = document.createElement("article"); step.className = "solution-step";
+            const number = document.createElement("span"); number.className = "solution-step-number"; number.textContent = String(index + 1).padStart(2, "0");
+            const body = document.createElement("p"); body.textContent = paragraph; step.append(number, body); explanationText.appendChild(step);
         });
+        renderDiagram(solutionVisual, visualKind, "Собираем решение по шагам", "Каждый шаг опирается на условие; итог проверяем по смыслу.");
         explanationContinueButton.textContent = buttonText;
         explanationAction = action;
 
@@ -366,7 +433,7 @@
                     result.explanationTitle || "Разбор задания",
                     result.explanation || "",
                     "Я прочитал(а), попробовать ещё раз",
-                    () => markExplanationViewed(currentTask.taskId)
+                    () => markExplanationViewed(currentTask.taskId), currentTask.visualKind || "steps", currentTask.solutionSteps || null
                 );
                 return;
             }
@@ -426,7 +493,7 @@
                     result.explanationTitle || "Сначала разберём задание",
                     result.explanation || "",
                     "Перейти к заданию",
-                    () => markExplanationViewed(result.taskId)
+                    () => markExplanationViewed(result.taskId), "steps"
                 );
                 return;
             }
