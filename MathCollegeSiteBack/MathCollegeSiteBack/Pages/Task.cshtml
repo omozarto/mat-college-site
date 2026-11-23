@@ -9,6 +9,9 @@
     <p id="statusMessage" class="status-message" role="status" aria-live="polite">
         Загружаем урок…
     </p>
+    <div class="lesson-global-actions">
+        <button id="lessonFullscreenButton" class="lesson-fullscreen-button" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg><span>На весь экран</span></button>
+    </div>
 
     <section id="lessonIntro" class="lesson-card hidden">
         <div class="lesson-topline"><span class="lesson-kicker">ЗАНЯТИЕ VARIQ</span><a href="/Themes" class="lesson-back">← К темам</a></div>
@@ -116,6 +119,7 @@
     const spinStudentWheel = document.getElementById("spinStudentWheel");
     const skipStudentWheel = document.getElementById("skipStudentWheel");
     const teacherWheelResult = document.getElementById("teacherWheelResult");
+    const lessonFullscreenButton = document.getElementById("lessonFullscreenButton");
     let wheelRotation = 0;
     let wheelIsSpinning = false;
 
@@ -148,6 +152,31 @@
     let lessonTutorContext = {};
     let restartPending = false;
     let explanationAction = null;
+
+    function updateFullscreenButton() {
+        const active = Boolean(document.fullscreenElement) || document.body.classList.contains("lesson-fullscreen-fallback");
+        if (!lessonFullscreenButton) return;
+        lessonFullscreenButton.setAttribute("aria-pressed", String(active));
+        lessonFullscreenButton.querySelector("span").textContent = active ? "Выйти из полного экрана" : "На весь экран";
+        lessonFullscreenButton.classList.toggle("is-active", active);
+    }
+
+    lessonFullscreenButton?.addEventListener("click", async () => {
+        try {
+            if (document.fullscreenElement) await document.exitFullscreen();
+            else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+            else document.body.classList.toggle("lesson-fullscreen-fallback");
+        } catch {
+            document.body.classList.toggle("lesson-fullscreen-fallback");
+        }
+        updateFullscreenButton();
+    });
+    document.addEventListener("fullscreenchange", updateFullscreenButton);
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && document.body.classList.contains("lesson-fullscreen-fallback")) {
+            document.body.classList.remove("lesson-fullscreen-fallback"); updateFullscreenButton();
+        }
+    });
 
     function drawStudentWheel() {
         const context = studentWheelCanvas?.getContext("2d");
