@@ -9,13 +9,14 @@ public static partial class LessonPresentation
     [
         ("idea", "Главная идея", ["Основная идея", "Идея"]),
         ("formula", "Правило и формула", ["Формула и алгоритм", "Формула", "Правило"]),
+        ("method", "Как действовать", ["План решения", "Шаги решения"]),
         ("example", "Разберём пример", ["Разобранный пример", "Пример"]),
         ("visual", "Посмотрим на схему", ["Наглядное объяснение", "Наглядно"]),
         ("caution", "Где легко ошибиться", ["Типичная ошибка", "Важно"]),
         ("summary", "Короткий итог", ["Итог урока", "Итог"])
     ];
 
-    public static IReadOnlyList<LessonContentBlock> BuildBlocks(string? content)
+    public static IReadOnlyList<LessonContentBlock> BuildBlocks(string? content, string? summary = null)
     {
         var paragraphs = (content ?? "").Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var blocks = new List<LessonContentBlock>();
@@ -23,6 +24,7 @@ public static partial class LessonPresentation
         foreach (var paragraph in paragraphs)
         {
             if (string.IsNullOrWhiteSpace(paragraph)) continue;
+            if (!string.IsNullOrWhiteSpace(summary) && paragraph.Equals(summary.Trim(), StringComparison.OrdinalIgnoreCase)) continue;
             var sectionIndex = Array.FindIndex(Sections, section => section.Labels.Any(label =>
                 paragraph.StartsWith(label + ".", StringComparison.OrdinalIgnoreCase)
                 || paragraph.StartsWith(label + ":", StringComparison.OrdinalIgnoreCase)));

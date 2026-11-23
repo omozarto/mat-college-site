@@ -7,6 +7,26 @@ namespace MathCollegeSiteBack.Controllers;
 [Route("api/experiments")]
 public sealed class ExperimentsController : ControllerBase
 {
+    [HttpPost("dice-sums")]
+    public ActionResult<DiceSumResult> RollTwoDice(ExperimentRequest request)
+    {
+        if (request.Trials is < 1 or > 100_000)
+            return BadRequest(new { message = "Количество бросков должно быть от 1 до 100 000." });
+
+        var counts = new int[13];
+        for (var i = 0; i < request.Trials; i++)
+            counts[Random.Shared.Next(1, 7) + Random.Shared.Next(1, 7)]++;
+
+        var theoreticalCounts = new[] { 0, 0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 };
+        var bins = Enumerable.Range(2, 11)
+            .Select(sum => new DiceSumBin(sum, counts[sum],
+                decimal.Round((decimal)counts[sum] / request.Trials, 6),
+                decimal.Round((decimal)theoreticalCounts[sum] / 36m, 6)))
+            .ToArray();
+
+        return Ok(new DiceSumResult(request.Trials, bins));
+    }
+
     [HttpPost("die")]
     public ActionResult<DieExperimentResult> RollDie(ExperimentRequest request)
     {
