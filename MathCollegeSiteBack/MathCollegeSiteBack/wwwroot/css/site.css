@@ -478,6 +478,41 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     .quant-bubble > p#quantSpeech { font-size: 12px; }
     .quant-chat-entry input { font-size: 12px; }
 }
+
+/* Optional teacher draw at the start of a lesson. */
+.teacher-wheel-panel { margin: 18px 0 24px; padding: clamp(18px,3vw,28px); display:grid; grid-template-columns:minmax(0,1fr) minmax(245px,340px); align-items:center; gap:8px 24px; border:1px solid rgba(168,142,238,.22); border-radius:24px; background:radial-gradient(ellipse at 82% 50%,rgba(121,91,201,.17),transparent 48%),linear-gradient(120deg,rgba(22,20,46,.94),rgba(13,13,30,.9)); }
+.teacher-wheel-panel[hidden] { display:none !important; }
+.teacher-wheel-copy { align-self:end; }
+.teacher-wheel-kicker { color:#b59cf0; font-size:9px; font-weight:850; letter-spacing:.15em; }
+.teacher-wheel-copy h2 { margin:8px 0 6px; color:#f2edff; font:750 clamp(19px,2.3vw,25px)/1.3 'Manrope',sans-serif; }
+.teacher-wheel-copy p { max-width:440px; margin:0; color:#a9a2bc; font-size:13px; line-height:1.7; }
+.teacher-wheel-stage { width:min(100%,320px); aspect-ratio:1; position:relative; justify-self:center; display:grid; place-items:center; }
+.teacher-wheel-stage canvas { width:100%; height:100%; display:block; border-radius:50%; filter:drop-shadow(0 12px 22px rgba(0,0,0,.35)); transition:transform 5.2s cubic-bezier(.12,.72,.16,1); }
+.wheel-pointer { position:absolute; z-index:2; top:-3px; left:50%; width:25px; height:33px; background:#f2cf78; clip-path:polygon(50% 100%,0 0,100% 0); filter:drop-shadow(0 2px 4px #080713); transform:translateX(-50%); }
+.wheel-center { position:absolute; z-index:1; width:52px; height:52px; display:grid; place-items:center; border:4px solid #dfc9ff; border-radius:50%; color:#f9f4ff; background:#21183e; box-shadow:0 2px 14px rgba(0,0,0,.45); font:850 9px 'Manrope',sans-serif; letter-spacing:.08em; pointer-events:none; }
+.teacher-wheel-result { min-height:26px; grid-column:1; margin:2px 0 0; color:#b5abc9; font-size:15px; font-weight:750; }
+.teacher-wheel-result.is-ready { color:#9be5cd; font-size:clamp(17px,2vw,21px); text-shadow:0 0 20px rgba(93,212,174,.2); animation:wheel-result-pop .35s ease-out; }
+.teacher-wheel-actions { grid-column:1; display:flex; flex-wrap:wrap; gap:9px; }
+.wheel-spin-button,.wheel-skip-button { min-height:43px; padding:0 15px; border-radius:12px; font-size:12px; font-weight:800; cursor:pointer; transition:transform .18s,filter .18s; }
+.wheel-spin-button { border:1px solid rgba(191,166,255,.42); color:white; background:linear-gradient(120deg,#8765da,#6649b2); box-shadow:0 8px 18px rgba(73,49,138,.22); }
+.wheel-skip-button { border:1px solid rgba(171,157,212,.23); color:#c5bdd5; background:rgba(255,255,255,.035); }
+.wheel-spin-button:hover:not(:disabled),.wheel-skip-button:hover:not(:disabled) { transform:translateY(-2px);filter:brightness(1.12); }
+.wheel-spin-button:disabled,.wheel-skip-button:disabled { opacity:.65;cursor:wait; }
+.teacher-wheel-actions button[hidden] { display:none !important; }
+@keyframes wheel-result-pop { from { opacity:0;transform:translateY(7px) scale(.98); } to { opacity:1;transform:translateY(0) scale(1); } }
+@media(max-width:720px) {
+    .teacher-wheel-panel { grid-template-columns:minmax(0,1fr); gap:10px 12px; padding:17px; }
+    .teacher-wheel-copy h2 { font-size:17px; }.teacher-wheel-copy p { font-size:11px; }
+    .teacher-wheel-stage { grid-row:2; width:min(76vw,285px); }
+    .wheel-center { width:36px;height:36px;border-width:3px;font-size:7px; }
+    .wheel-pointer { width:18px;height:24px; }
+    .teacher-wheel-result,.teacher-wheel-actions { grid-column:1; }
+    .teacher-wheel-result { font-size:13px; }.wheel-spin-button,.wheel-skip-button { min-height:40px; }
+}
+@media(prefers-reduced-motion:reduce) {
+    .teacher-wheel-stage canvas { transition-duration:.01ms; }
+    .teacher-wheel-result.is-ready { animation:none; }
+}
 @media (max-width: 390px) { .quant-widget { width: 88px; }.quant-companion { width: 82px; min-height: 101px; }.quant-cat { width: 80px; height: 86px; } }
 .quant-brows { transform-box: fill-box; transform-origin: center; transition: transform .25s; }.quant-widget[data-mood="worried"] .quant-brows { transform: translateY(3px) rotate(5deg); }.quant-widget[data-mood="thinking"] .quant-brows { transform: translateY(3px); }.quant-widget[data-mood="happy"] .quant-eyes { animation: quant-smile .6s ease-in-out 2; }.quant-widget[data-mood="talking"] .quant-tail { animation-duration: .8s; }
 @keyframes quant-smile { 50% { transform: scaleY(.14); } }

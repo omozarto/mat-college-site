@@ -21,6 +21,24 @@
             <div id="lessonContent" class="lesson-content"></div>
         </div>
 
+        <section id="teacherWheel" class="teacher-wheel-panel" aria-labelledby="teacherWheelTitle">
+            <div class="teacher-wheel-copy">
+                <span class="teacher-wheel-kicker">ПО ЖЕЛАНИЮ ПРЕПОДАВАТЕЛЯ</span>
+                <h2 id="teacherWheelTitle">Кто сегодня выходит к доске?</h2>
+                <p>Колесо выберет номер ученика от 1 до 25. Можно пропустить и сразу начать урок.</p>
+            </div>
+            <div class="teacher-wheel-stage">
+                <span class="wheel-pointer" aria-hidden="true"></span>
+                <canvas id="studentWheelCanvas" width="440" height="440" role="img" aria-label="Колесо жеребьёвки с номерами учеников от 1 до 25"></canvas>
+                <span class="wheel-center" aria-hidden="true">VARIQ</span>
+            </div>
+            <p id="teacherWheelResult" class="teacher-wheel-result" aria-live="polite"></p>
+            <div class="teacher-wheel-actions">
+                <button id="spinStudentWheel" class="wheel-spin-button" type="button">Крутить колесо</button>
+                <button id="skipStudentWheel" class="wheel-skip-button" type="button">Пропустить</button>
+            </div>
+        </section>
+
         <section class="lesson-arcade" id="lessonArcade" aria-labelledby="lessonArcadeTitle">
             <div class="arcade-heading"><span class="arcade-icon" aria-hidden="true">✦</span><div><p>МИНИ-ИГРА УРОКА</p><h2 id="lessonArcadeTitle">Проверим догадку</h2></div><span class="arcade-stars">✦ <b id="arcadeScore">0</b></span></div>
             <p class="arcade-prompt" id="arcadePrompt"></p>
@@ -94,6 +112,12 @@
     const arcadeFeedback = document.getElementById("arcadeFeedback");
     const arcadeNext = document.getElementById("arcadeNext");
     const arcadeScore = document.getElementById("arcadeScore");
+    const studentWheelCanvas = document.getElementById("studentWheelCanvas");
+    const spinStudentWheel = document.getElementById("spinStudentWheel");
+    const skipStudentWheel = document.getElementById("skipStudentWheel");
+    const teacherWheelResult = document.getElementById("teacherWheelResult");
+    let wheelRotation = 0;
+    let wheelIsSpinning = false;
 
     const taskSection = document.getElementById("taskSection");
     const taskProgress = document.getElementById("taskProgress");
@@ -124,6 +148,60 @@
     let lessonTutorContext = {};
     let restartPending = false;
     let explanationAction = null;
+
+    function drawStudentWheel() {
+        const context = studentWheelCanvas?.getContext("2d");
+        if (!context) return;
+        const size = studentWheelCanvas.width, center = size / 2, radius = center - 15;
+        const segment = Math.PI * 2 / 25, startAt = -Math.PI / 2;
+        const colors = ["#684cae", "#865fc5", "#4a3b82", "#a178d7", "#57458f"];
+        context.clearRect(0, 0, size, size);
+        for (let index = 0; index < 25; index++) {
+            const start = startAt + index * segment, end = start + segment;
+            context.beginPath(); context.moveTo(center, center); context.arc(center, center, radius, start, end); context.closePath();
+            context.fillStyle = colors[index % colors.length]; context.fill();
+            context.strokeStyle = "rgba(234, 220, 255, .82)"; context.lineWidth = 2; context.stroke();
+            const middle = start + segment / 2, labelRadius = radius * .76;
+            const x = center + Math.cos(middle) * labelRadius, y = center + Math.sin(middle) * labelRadius;
+            context.save(); context.translate(x, y); context.fillStyle = "#fff"; context.font = "700 15px Segoe UI, sans-serif";
+            context.textAlign = "center"; context.textBaseline = "middle"; context.fillText(String(index + 1), 0, 0); context.restore();
+        }
+        context.beginPath(); context.arc(center, center, radius, 0, Math.PI * 2); context.strokeStyle = "#d0b7ff"; context.lineWidth = 5; context.stroke();
+    }
+
+    function initTeacherWheel() {
+        if (!studentWheelCanvas || !spinStudentWheel || !skipStudentWheel) return;
+        drawStudentWheel();
+        spinStudentWheel.addEventListener("click", () => {
+            if (wheelIsSpinning) return;
+            wheelIsSpinning = true; spinStudentWheel.disabled = true; skipStudentWheel.disabled = true;
+            const studentNumber = Math.floor(Math.random() * 25) + 1;
+            const targetOffset = (360 - (studentNumber - .5) * (360 / 25)) % 360;
+            const nextRotation = Math.ceil((wheelRotation + 5 * 360 - targetOffset) / 360) * 360 + targetOffset;
+            wheelRotation = nextRotation;
+            studentWheelCanvas.style.transform = `rotate(${nextRotation}deg)`;
+            teacherWheelResult.classList.remove("is-ready");
+            teacherWheelResult.textContent = "Колесо выбирает…";
+            window.VariqCat?.say("Сейчас узнаем, кто сегодня поможет разобрать задачу у доски!", "surprised");
+            let resultShown = false;
+            const revealStudent = () => {
+                if (resultShown) return;
+                resultShown = true;
+                wheelIsSpinning = false;
+                teacherWheelResult.textContent = `Ученик ${studentNumber} выходит к доске!`;
+                teacherWheelResult.classList.add("is-ready");
+                spinStudentWheel.hidden = true; skipStudentWheel.hidden = true;
+                startButton.textContent = `Начать урок · ученик ${studentNumber}`;
+                window.VariqCat?.say(`Ученик ${studentNumber} выходит к доске! Я помогу с первым шагом задания.`, "happy");
+            };
+            studentWheelCanvas.addEventListener("transitionend", revealStudent, { once: true });
+            window.setTimeout(revealStudent, 5600);
+        });
+        skipStudentWheel.addEventListener("click", () => {
+            document.getElementById("teacherWheel").hidden = true;
+            window.VariqCat?.say("Жеребьёвку пропускаем. Можно начинать урок!", "happy");
+        });
+    }
 
     function show(element) {
         element.classList.remove("hidden");
@@ -664,4 +742,5 @@
     });
 
     loadLesson();
+    initTeacherWheel();
 </script>
