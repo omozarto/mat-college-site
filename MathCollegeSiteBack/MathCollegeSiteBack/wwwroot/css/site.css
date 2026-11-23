@@ -353,6 +353,110 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce) {
     .quant-widget[data-mood="curious"] .quant-cat, .quant-widget[data-mood="surprised"] .quant-cat { animation: none; }
 }
+
+/* Lesson pages use a visual narrative instead of a stack of chat-like cards. */
+.lesson-page { max-width: 1080px; }
+.lesson-page #lessonIntro { overflow: hidden; background: radial-gradient(ellipse at 90% 0, rgba(114, 82, 199, .16), transparent 44%), linear-gradient(145deg, #17162f, #101022 68%); }
+.lesson-page .lesson-theory-box { padding: clamp(20px, 4vw, 46px); border: 0; background: transparent; box-shadow: none; }
+.lesson-page .lesson-theory-box > h2 { margin-bottom: 27px; font-size: clamp(24px, 3vw, 32px); }
+.lesson-page #lessonContent.lesson-content { display: block; white-space: normal; }
+.lesson-beat { position: relative; margin: 0; padding: 27px 0 31px; display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 17px; border-top: 1px solid rgba(179, 160, 229, .12); }
+.lesson-beat:first-child { border-top: 0; }
+.beat-number { width: 46px; height: 46px; margin-top: 1px; display: grid; place-items: center; border: 1px solid rgba(169, 146, 242, .28); border-radius: 15px; color: #cdbdff; background: linear-gradient(145deg, rgba(124, 94, 211, .28), rgba(46, 38, 80, .33)); font: 800 13px 'Manrope', sans-serif; box-shadow: 0 8px 24px rgba(5, 4, 16, .18); }
+.beat-copy { min-width: 0; }
+.beat-copy > h3 { margin: 4px 0 13px; color: #f0ebff; font: 750 clamp(19px, 2.5vw, 25px)/1.3 'Manrope', sans-serif; letter-spacing: -.02em; }
+.beat-text { max-width: 780px; margin: 0; color: #c3bdd2; font-size: 16px; line-height: 1.9; }
+.lesson-beat.is-idea { padding-top: 3px; border: 0; }
+.lesson-beat.is-idea .beat-number { color: #fff; border-color: transparent; background: linear-gradient(145deg, #9c7cff, #6848c6); }
+.lesson-beat.is-idea .beat-text { max-width: 800px; color: #e2dcf1; font-size: clamp(18px, 2.4vw, 23px); line-height: 1.65; }
+.lesson-beat.is-formula { margin: 6px 0 10px; padding: 27px 30px; grid-template-columns: 48px minmax(0, 1fr); border: 1px solid rgba(149, 122, 233, .22); border-radius: 22px; background: linear-gradient(112deg, rgba(99, 73, 167, .25), rgba(25, 23, 51, .68) 72%); }
+.lesson-beat.is-formula .beat-number { width: 38px; height: 38px; border-radius: 12px; font-size: 11px; }
+.lesson-beat.is-formula .beat-copy > h3 { margin-top: 0; }
+.formula-display { max-width: 820px; color: #e8ddff; font: 650 clamp(18px, 2.4vw, 25px)/1.75 'Cambria Math', 'Segoe UI', sans-serif; overflow-wrap: anywhere; }
+.beat-note { max-width: 720px; margin: 12px 0 0; color: #aaa2c2; font-size: 13px; line-height: 1.7; }
+.lesson-beat.is-method .beat-number { color: #9fe4d2; border-color: rgba(105, 209, 180, .27); background: rgba(62, 163, 138, .14); }
+.method-steps { max-width: 800px; margin: 4px 0 0; padding: 0; display: grid; gap: 13px; list-style: none; counter-reset: lesson-method; }
+.method-steps li { position: relative; min-height: 52px; padding: 12px 15px 12px 56px; display: flex; align-items: center; border-left: 2px solid rgba(117, 202, 180, .46); color: #d0cbdc; background: linear-gradient(90deg, rgba(59, 128, 110, .12), transparent 80%); font-size: 15px; line-height: 1.7; counter-increment: lesson-method; }
+.method-steps li::before { position: absolute; left: 13px; width: 27px; height: 27px; display: grid; place-items: center; border: 1px solid rgba(121, 219, 192, .35); border-radius: 50%; color: #9be3ce; background: #111d25; content: counter(lesson-method); font: 800 11px 'Manrope', sans-serif; }
+.lesson-beat.is-example { margin: 5px 0 12px; padding: 26px 28px; border: 1px solid rgba(232, 190, 116, .24); border-radius: 21px; background: radial-gradient(ellipse at 100% 0, rgba(196, 142, 66, .13), transparent 51%), rgba(49, 38, 31, .28); }
+.lesson-beat.is-example .beat-number { color: #f3d297; border-color: rgba(235, 194, 126, .3); background: rgba(166, 118, 51, .16); }
+.example-board { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(170px, .8fr); align-items: center; gap: 18px 30px; }
+.example-situation { margin: 0; color: #e4d8c6; font-size: 16px; line-height: 1.85; }
+.example-calculation { min-height: 102px; padding: 15px 18px; display: grid; align-content: center; gap: 6px; border-left: 2px solid #e5be78; background: linear-gradient(90deg, rgba(163, 119, 54, .15), transparent); }
+.example-calculation span { color: #c3a978; font-size: 10px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+.example-calculation strong { color: #ffe1a5; font: 750 clamp(20px, 2.8vw, 29px)/1.3 'Cambria Math', 'Segoe UI', sans-serif; overflow-wrap: anywhere; }
+.example-insight { grid-column: 1 / -1; margin: 0; color: #b7a992; font-size: 13px; line-height: 1.65; }
+.lesson-beat.is-visual .beat-number { color: #93ded0; border-color: rgba(112, 206, 186, .27); background: rgba(54, 147, 131, .14); }
+.lesson-beat.is-visual .beat-text { max-width: 800px; margin-bottom: 15px; }
+.lesson-illustration { max-width: 800px; padding: 20px; border: 1px solid rgba(124, 196, 185, .17); border-radius: 20px; background: radial-gradient(ellipse at 50% 100%, rgba(62, 150, 136, .13), transparent 68%), #101c25; }
+.lesson-illustration svg { width: 100%; height: auto; display: block; }
+.illustration-line { fill: none; stroke: #9e83f0; stroke-width: 3; stroke-linecap: round; }
+.illustration-axis { fill: none; stroke: rgba(191, 193, 215, .47); stroke-width: 1.5; }
+.illustration-average { fill: none; stroke: #f0cb7a; stroke-width: 2; stroke-dasharray: 7 7; }
+.illustration-curve { fill: none; stroke: #9f83fa; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 8px rgba(153, 122, 255, .36)); }
+.illustration-node, .illustration-cell { fill: #1a203a; stroke: #a58df0; stroke-width: 2; }
+.illustration-node.is-highlight, .illustration-cell.is-highlight { fill: #493a76; stroke: #c5b5ff; }
+.illustration-text { fill: #e5def5; font: 650 13px 'Segoe UI', sans-serif; }
+.lesson-beat.is-caution { margin: 8px 0; padding: 19px 23px; grid-template-columns: 44px minmax(0,1fr); border: 0; border-left: 3px solid #ec8ea8; border-radius: 0 16px 16px 0; background: linear-gradient(90deg, rgba(164, 74, 105, .17), transparent); }
+.lesson-beat.is-caution .beat-number { width: 36px; height: 36px; color: #ffc0ce; border-color: rgba(239, 142, 168, .23); background: rgba(145, 59, 84, .2); }
+.lesson-beat.is-caution .beat-copy > h3 { margin: 0 0 5px; font-size: 17px; }
+.lesson-beat.is-caution .beat-text { color: #d2b8c3; font-size: 14px; }
+.lesson-beat.is-summary { padding-bottom: 5px; border-bottom: 0; }
+.lesson-beat.is-summary .beat-number { color: #b7e9db; border-color: rgba(111, 205, 174, .24); background: rgba(51, 144, 119, .14); }
+.lesson-beat.is-summary .beat-text { color: #c0d5cd; }
+.lesson-arcade { margin: 10px 0 25px; padding: clamp(20px, 4vw, 32px); border: 1px solid rgba(157, 130, 238, .28); border-radius: 24px; background: radial-gradient(ellipse at 100% 0, rgba(123, 86, 219, .25), transparent 47%), linear-gradient(125deg, #1b1939, #111126 74%); box-shadow: 0 18px 45px rgba(0,0,0,.2); }
+.arcade-heading { display: flex; align-items: center; gap: 13px; }
+.arcade-icon { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid rgba(183, 156, 255, .26); border-radius: 15px; color: #d6c8ff; background: rgba(137, 103, 226, .2); font-size: 22px; }
+.arcade-heading p { margin: 0 0 2px; color: #aa96e5; font-size: 9px; font-weight: 850; letter-spacing: .16em; }
+.arcade-heading h2 { margin: 0; color: #f0eaff; font: 750 20px 'Manrope',sans-serif; }
+.arcade-stars { margin-left: auto; color: #f4cc76; font-size: 15px; }.arcade-stars b { font-size: 18px; }
+.arcade-prompt { margin: 22px 0 17px; color: #e6e0ef; font: 650 clamp(17px,2.2vw,22px)/1.55 'Manrope',sans-serif; }
+.arcade-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.arcade-option { min-height: 45px; padding: 9px 16px; border: 1px solid rgba(171, 151, 234, .3); border-radius: 13px; color: #e5ddf4; background: rgba(255,255,255,.035); font-weight: 700; cursor: pointer; transition: .18s ease; }
+.arcade-option:hover:not(:disabled) { transform: translateY(-2px); border-color: #aa8aff; background: rgba(132, 99, 220, .2); }
+.arcade-option:disabled { cursor: default; }.arcade-option.is-correct { border-color: #64d4b5; color: #b8f1e1; background: rgba(54, 159, 130, .18); }.arcade-option.is-wrong { border-color: #e78ca6; color: #ffc3d1; background: rgba(172, 66, 97, .16); }
+.arcade-feedback { min-height: 24px; margin: 14px 0 0; color: #a8a0bb; font-size: 13px; line-height: 1.6; }.arcade-feedback.is-correct { color: #98e3ce; }.arcade-feedback.is-wrong { color: #e2b9c5; }
+.arcade-next { margin-top: 8px; padding: 10px 0; border: 0; color: #cbb9ff; background: transparent; font-weight: 750; cursor: pointer; }.arcade-next[hidden] { display:none; }
+.lesson-page #taskSection { border-top: 3px solid #9275e7; background: radial-gradient(ellipse at 100% 0,rgba(122,90,213,.17),transparent 45%),linear-gradient(145deg,#17162f,#101022); }
+.lesson-page .answer-option { min-height: 62px; padding: 16px; display: flex; align-items: center; border-radius: 16px; background: linear-gradient(120deg,rgba(255,255,255,.045),rgba(255,255,255,.015)); }
+.lesson-page .answer-option:hover { transform: translateY(-2px); }
+.lesson-page .answer-option input { width: 19px; height: 19px; flex: 0 0 19px; }
+.lesson-page #answerOptions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+
+/* Laboratory: games have scoreboards, prediction and animated result charts. */
+.lab-page .lab-section { max-width: 1200px; margin-inline: auto; padding: clamp(16px,3vw,34px); }
+.lab-page .lab-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.lab-page .lab-card { padding: clamp(17px,2.5vw,26px); border-radius: 22px; background: linear-gradient(145deg,rgba(25,23,54,.94),rgba(12,12,29,.96)); box-shadow: inset 0 1px rgba(255,255,255,.035),0 14px 34px rgba(0,0,0,.16); }
+.lab-page .lab-card-title { margin-bottom: 16px; }
+.dice-game-callout { margin: 5px 0 14px; padding: 12px 15px; display: flex; align-items: center; gap: 9px; border-left: 3px solid #b195ff; background: linear-gradient(90deg,rgba(130,99,220,.16),transparent); }
+.dice-game-callout strong { color:#e8ddff; }.dice-game-callout span { color:#c0b9d0; }.dice-game-callout b { margin-left:auto; color:#a997da; font-size:10px; }
+.dice-guess-row { margin: 0 0 7px; display:flex; flex-wrap:wrap; gap:6px; }
+.dice-guess-row button { width:34px;height:34px;border:1px solid rgba(169,149,228,.21);border-radius:10px;color:#bbb2ce;background:rgba(255,255,255,.025);font-weight:750;cursor:pointer; }
+.dice-guess-row button.is-selected { border-color:#b49aff;color:white;background:#7256c5;box-shadow:0 0 15px rgba(145,113,225,.24); }
+.dice-chart-wrap { margin: 0 -6px 5px; }
+.dice-chart-wrap svg { width:100%; height:auto; display:block; }
+.dice-grid { fill:none;stroke:rgba(184,168,229,.1);stroke-width:1; }.dice-axis { fill:none;stroke:rgba(192,184,214,.42);stroke-width:1.5; }
+.dice-bar { fill:#7458c7;opacity:.8;transition:height .45s,y .45s,fill .25s; }.dice-bar.is-peak { fill:#d7ad59;opacity:.95; }
+.dice-label { fill:#b8b0c9;font:600 12px 'Segoe UI',sans-serif; }
+.dice-game-card .lab-controls { justify-content:space-between; }.chance-score { margin-left:auto;color:#b8acd7;font-size:11px; }.chance-score b { color:#d9caff;font-size:16px; }
+.chance-target { min-height:150px;padding:20px;display:grid;align-content:center;gap:15px;border:1px solid rgba(174,151,255,.18);border-radius:18px;background:radial-gradient(ellipse at 50% 120%,rgba(111,80,199,.24),transparent 65%),rgba(10,10,26,.45);text-align:center; }
+.chance-target > span { color:#a491df;font-size:9px;font-weight:850;letter-spacing:.17em; }.chance-target > span b { margin-left:6px;color:#e5d9ff; }
+.chance-target > strong { color:#f0ebfa;font:700 clamp(17px,2vw,21px)/1.5 'Manrope',sans-serif; }
+.chance-options { margin-top:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px; }
+.chance-option { min-height:43px;border:1px solid rgba(171,151,234,.24);border-radius:12px;color:#d3cae5;background:rgba(255,255,255,.025);font-weight:750;cursor:pointer;transition:.16s ease; }
+.chance-option:hover:not(:disabled) { transform:translateY(-2px);border-color:#aa8aff;background:rgba(132,99,220,.16); }
+.chance-option.is-correct { border-color:#64d4b5;color:#b8f1e1;background:rgba(54,159,130,.18); }.chance-option.is-wrong { border-color:#e78ca6;color:#ffc3d1;background:rgba(172,66,97,.16); }
+.chance-next { float:right; }.chance-next[hidden] { display:none; }.lab-feedback.is-correct { color:#98e3ce; }.lab-feedback.is-wrong { color:#e2b9c5; }
+@media(max-width:760px) {
+    .lesson-beat { grid-template-columns:42px minmax(0,1fr);gap:11px;padding:22px 0; }
+    .beat-number { width:36px;height:36px;border-radius:12px;font-size:11px; }
+    .lesson-beat.is-formula,.lesson-beat.is-example { padding:19px 15px;grid-template-columns:36px minmax(0,1fr); }
+    .formula-display { font-size:18px; }.beat-text,.example-situation { font-size:14px; }
+    .example-board { grid-template-columns:1fr;gap:9px; }.example-calculation { min-height:75px; }.example-insight { grid-column:auto; }
+    .lesson-page #answerOptions { grid-template-columns:1fr;gap:6px; }
+    .lab-page .lab-grid { grid-template-columns:1fr; }
+    .dice-game-callout { align-items:flex-start;flex-direction:column;gap:4px; }.dice-game-callout b { margin-left:0; }
+}
 @media (max-width: 390px) { .quant-widget { width: 88px; }.quant-companion { width: 82px; min-height: 101px; }.quant-cat { width: 80px; height: 86px; } }
 .quant-brows { transform-box: fill-box; transform-origin: center; transition: transform .25s; }.quant-widget[data-mood="worried"] .quant-brows { transform: translateY(3px) rotate(5deg); }.quant-widget[data-mood="thinking"] .quant-brows { transform: translateY(3px); }.quant-widget[data-mood="happy"] .quant-eyes { animation: quant-smile .6s ease-in-out 2; }.quant-widget[data-mood="talking"] .quant-tail { animation-duration: .8s; }
 @keyframes quant-smile { 50% { transform: scaleY(.14); } }

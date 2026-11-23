@@ -29,6 +29,21 @@
                 <div class="slider-row"><label for="sigmaSlider">Разброс <span id="sigmaLabel">1,0</span></label><input id="sigmaSlider" type="range" min="0.5" max="2.5" step="0.1" value="1" /></div>
                 <p class="lab-feedback">Среднее сдвигает центр. Разброс делает кривую шире или уже.</p>
             </article>
+            <article class="lab-card dice-game-card">
+                <div class="lab-card-title"><span class="lab-icon">⚄</span><div><h3>Сумма двух кубиков</h3><p>Смоделируй броски и найди самую частую сумму</p></div></div>
+                <div class="dice-game-callout"><strong>Как думаешь?</strong><span>Какая сумма выпадет чаще всего?</span><b>Сделай прогноз перед запуском ↘</b></div>
+                <div class="dice-guess-row" id="diceGuesses" aria-label="Выбери прогноз суммы"></div>
+                <div class="dice-chart-wrap"><svg id="diceHistogram" viewBox="0 0 600 220" role="img" aria-label="Гистограмма результатов броска двух кубиков"><path class="dice-grid" d="M42 38H580M42 82H580M42 126H580M42 170H580M42 190H580"/><path class="dice-axis" d="M42 25V190H580"/><g id="diceBars"></g><g id="diceLabels"></g></svg></div>
+                <div class="lab-controls"><label for="diceTrials">Число бросков</label><select id="diceTrials"><option value="100">100</option><option value="1000" selected>1 000</option><option value="10000">10 000</option></select><button class="button button-small" id="rollDiceButton" type="button">Бросить кубики <span>⚄</span></button></div>
+                <p class="lab-feedback" id="diceFeedback" aria-live="polite">Сначала выбери сумму-прогноз: кажется, 7?</p>
+            </article>
+            <article class="lab-card chance-game-card">
+                <div class="lab-card-title"><span class="lab-icon">◎</span><div><h3>Попади в вероятность</h3><p>Короткий раунд на внимательность</p></div><span class="chance-score">Серия <b id="chanceScore">0</b></span></div>
+                <div class="chance-target"><span>ВОПРОС <b id="chanceRound">01</b></span><strong id="chancePrompt">Загрузка задачи…</strong></div>
+                <div id="chanceOptions" class="chance-options"></div>
+                <p id="chanceFeedback" class="lab-feedback" aria-live="polite">Выбери вероятность, которая подходит условию.</p>
+                <button class="button button-small chance-next" id="chanceNext" type="button" hidden>Следующий раунд <span>→</span></button>
+            </article>
         </div>
         <article class="lab-card monty-card">
             <div class="lab-card-title"><span class="lab-icon">🚪</span><div><h3>Три двери</h3><p>Задача Монти Холла: довериться интуиции или сменить выбор?</p></div><span class="monty-rounds" id="montyScore">0 побед / 0 раундов</span></div>
@@ -64,6 +79,50 @@
         } catch (error) { $('coinFeedback').textContent = error.message; window.VariqCat?.say(error.message, 'worried'); }
         finally { window.setTimeout(() => { button.disabled = false; }, 500); }
     });
+
+    let predictedSum = null;
+    const guesses = $('diceGuesses');
+    for (let sum = 2; sum <= 12; sum++) {
+        const button = document.createElement('button'); button.type = 'button'; button.textContent = String(sum);
+        button.addEventListener('click', () => { predictedSum = sum; guesses.querySelectorAll('button').forEach(item => item.classList.toggle('is-selected', item === button)); });
+        guesses.appendChild(button);
+    }
+    $('rollDiceButton').addEventListener('click', async () => {
+        if (predictedSum === null) { $('diceFeedback').textContent = 'Сначала выбери число от 2 до 12 — зафиксируй свой прогноз.'; window.VariqCat?.say('Запомнил(а) бы свой прогноз до того, как увидишь результат!', 'curious'); return; }
+        const button = $('rollDiceButton'); button.disabled = true; $('diceFeedback').textContent = 'Кубики катятся…';
+        window.VariqCat?.say('Сумма 7 кажется самой частой, но давай проверим на опыте!', 'thinking');
+        try {
+            const response = await fetch('/api/experiments/dice-sums', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trials:Number($('diceTrials').value)}) });
+            const data = await response.json(); if (!response.ok) throw new Error(data.message || 'Не удалось смоделировать броски.');
+            const maxCount = Math.max(...data.bins.map(bin=>bin.count),1), bars = $('diceBars'), labels = $('diceLabels'); bars.replaceChildren(); labels.replaceChildren();
+            data.bins.forEach((bin,index)=>{
+                const height = Math.max(3, bin.count/maxCount*126), x=57+index*47;
+                bars.appendChild(svgElement('rect',{x,y:176-height,width:29,height,rx:7,class:bin.sum===7?'dice-bar is-peak':'dice-bar'}));
+                labels.appendChild(svgElement('text',{x:x+14,y:207,'text-anchor':'middle',class:'dice-label'},String(bin.sum)));
+            });
+            const predicted = data.bins.find(bin=>bin.sum===predictedSum), peak = data.bins.reduce((best,bin)=>bin.count>best.count?bin:best,data.bins[0]);
+            $('diceFeedback').textContent = `Твой прогноз: ${predictedSum}. Чаще всего выпала сумма ${peak.sum} (${peak.count} из ${data.trials}). ${predictedSum===peak.sum?'Угадано!':'Посмотри, как частоты образовали горку вокруг 7.'}`;
+            window.VariqCat?.say(predictedSum===peak.sum?'Точный прогноз! Семёрка получается шестью способами из 36.':'Посмотри на столбики: сумма 7 складывается шестью разными парами граней.',predictedSum===peak.sum?'happy':'curious');
+        } catch(error) { $('diceFeedback').textContent=error.message; window.VariqCat?.say(error.message,'worried'); }
+        finally { button.disabled=false; }
+    });
+
+    const chanceCards = [
+        { q:'На кубике нужно выбросить число больше 4. Каков шанс?', a:'1/3', why:'Подходят две грани: 5 и 6. Получается 2/6 = 1/3.' },
+        { q:'Из мешка с тремя красными и одним синим шаром вытягивают один. Шанс красного?', a:'3/4', why:'Три подходящих шара из четырёх: 3/4.' },
+        { q:'Монету бросают дважды. Каков шанс получить два орла?', a:'1/4', why:'Возможны четыре равных исхода, и только один — орёл-орёл.' },
+        { q:'На обычном кубике выпало чётное число. Вероятность?', a:'1/2', why:'Три чётных числа из шести: 3/6 = 1/2.' },
+        { q:'Каков шанс получить сумму 7 на двух кубиках?', a:'1/6', why:'Сумму 7 дают 6 пар из 36: 6/36 = 1/6.' },
+        { q:'На кубике нужно выбросить число меньше 7. Вероятность?', a:'1', why:'Все шесть граней меньше 7, событие достоверное: шанс равен 1.' }
+    ];
+    const probabilityOptions=['1/6','1/4','1/3','1/2','3/4','1']; let chanceIndex=0,chanceStreak=0;
+    const renderChance=()=>{
+        const item=chanceCards[chanceIndex%chanceCards.length]; $('chanceRound').textContent=String(chanceIndex+1).padStart(2,'0'); $('chancePrompt').textContent=item.q; $('chanceFeedback').textContent='Выбери вероятность, которая подходит условию.'; $('chanceFeedback').className='lab-feedback'; $('chanceNext').hidden=true; $('chanceOptions').replaceChildren();
+        probabilityOptions.forEach(value=>{const option=document.createElement('button');option.type='button';option.className='chance-option';option.textContent=value;option.addEventListener('click',()=>{const correct=value===item.a;chanceStreak=correct?chanceStreak+1:0;$('chanceScore').textContent=String(chanceStreak);$('chanceOptions').querySelectorAll('button').forEach(button=>{button.disabled=true;if(button.textContent===item.a)button.classList.add('is-correct');else if(button===option&&!correct)button.classList.add('is-wrong');});$('chanceFeedback').textContent=`${correct?'Верно!':'Разберём:'} ${item.why}`;$('chanceFeedback').classList.add(correct?'is-correct':'is-wrong');$('chanceNext').hidden=false;window.VariqCat?.say(correct?'Есть! Быстро и точно.':item.why,correct?'happy':'thinking');});$('chanceOptions').appendChild(option);});
+    };
+    $('chanceNext').addEventListener('click',()=>{chanceIndex++;renderChance();}); renderChance();
+
+    function svgElement(name, attributes, content='') { const node=document.createElementNS('http://www.w3.org/2000/svg',name);Object.entries(attributes).forEach(([key,value])=>node.setAttribute(key,value));if(content)node.textContent=content;return node; }
 
     const drawNormal = () => {
         const mean = Number($('meanSlider').value), sigma = Number($('sigmaSlider').value);

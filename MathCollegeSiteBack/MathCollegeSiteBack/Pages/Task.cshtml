@@ -19,8 +19,15 @@
             <h2>Объяснение темы</h2>
             <div class="lesson-learning-path" aria-hidden="true"><span>Идея</span><i></i><span>Формула</span><i></i><span>Пример</span><i></i><span>Практика</span></div>
             <div id="lessonContent" class="lesson-content"></div>
-            <div id="lessonVisual" class="learning-visual"></div>
         </div>
+
+        <section class="lesson-arcade" id="lessonArcade" aria-labelledby="lessonArcadeTitle">
+            <div class="arcade-heading"><span class="arcade-icon" aria-hidden="true">✦</span><div><p>МИНИ-ИГРА УРОКА</p><h2 id="lessonArcadeTitle">Проверим догадку</h2></div><span class="arcade-stars">✦ <b id="arcadeScore">0</b></span></div>
+            <p class="arcade-prompt" id="arcadePrompt"></p>
+            <div id="arcadeOptions" class="arcade-options"></div>
+            <p id="arcadeFeedback" class="arcade-feedback" aria-live="polite">Выбери ответ — Квант проверит твою догадку.</p>
+            <button id="arcadeNext" class="arcade-next" type="button" hidden>Другая задача <span aria-hidden="true">↗</span></button>
+        </section>
 
         <button id="startButton" class="lesson-button" type="button">
             Начать занятие
@@ -81,8 +88,12 @@
     const lessonTitle = document.getElementById("lessonTitle");
     const lessonSummary = document.getElementById("lessonSummary");
     const lessonContent = document.getElementById("lessonContent");
-    const lessonVisual = document.getElementById("lessonVisual");
     const startButton = document.getElementById("startButton");
+    const arcadePrompt = document.getElementById("arcadePrompt");
+    const arcadeOptions = document.getElementById("arcadeOptions");
+    const arcadeFeedback = document.getElementById("arcadeFeedback");
+    const arcadeNext = document.getElementById("arcadeNext");
+    const arcadeScore = document.getElementById("arcadeScore");
 
     const taskSection = document.getElementById("taskSection");
     const taskProgress = document.getElementById("taskProgress");
@@ -130,12 +141,13 @@
     function renderLessonContent(content, contentBlocks = [], visualKind = "steps") {
         const paragraphs = String(content || "").split(/\r?\n\s*\r?\n|\r?\n/).map(item => item.trim()).filter(Boolean);
         const sections = [
-            { title: "Сначала — главная идея", icon: "✦", kind: "idea", labels: ["Основная идея"] },
-            { title: "Запишем правило", icon: "∑", kind: "formula", labels: ["Формула и алгоритм", "Формула"] },
-            { title: "Разберём на примере", icon: "⚄", kind: "example", labels: ["Разобранный пример", "Пример"] },
-            { title: "Представь это", icon: "◌", kind: "visual", labels: ["Наглядное объяснение", "Наглядно"] },
-            { title: "На что обратить внимание", icon: "!", kind: "caution", labels: ["Типичная ошибка", "Важно"] },
-            { title: "Короткий итог", icon: "✓", kind: "summary", labels: ["Итог урока", "Итог"] }
+            { title: "Главная идея", icon: "✦", kind: "idea", labels: ["Основная идея"] },
+            { title: "Правило и формула", icon: "∑", kind: "formula", labels: ["Формула и алгоритм", "Формула"] },
+            { title: "План решения", icon: "01", kind: "method", labels: ["План решения", "Шаги решения"] },
+            { title: "Разбор на примере", icon: "↗", kind: "example", labels: ["Разобранный пример", "Пример"] },
+            { title: "Смотри, как это устроено", icon: "◌", kind: "visual", labels: ["Наглядное объяснение", "Наглядно"] },
+            { title: "Ловушка, которую обходим", icon: "!", kind: "caution", labels: ["Типичная ошибка", "Важно"] },
+            { title: "Запомни главное", icon: "✓", kind: "summary", labels: ["Итог урока", "Итог"] }
         ];
         lessonContent.replaceChildren();
         const blocks = contentBlocks.length ? contentBlocks : paragraphs.map((paragraph, index) => {
@@ -148,14 +160,97 @@
         });
         blocks.forEach((block, index) => {
             const descriptor = sections.find(section => section.kind === block.kind) || sections[0];
-            const card = document.createElement("article"); card.className = `lesson-content-card is-${descriptor.kind}`;
-            const badge = document.createElement("span"); badge.className = "lesson-content-icon"; badge.textContent = descriptor.icon;
+            const chapter = document.createElement("section"); chapter.className = `lesson-beat is-${descriptor.kind}`;
+            chapter.setAttribute("aria-label", block.title || descriptor.title);
+            const number = document.createElement("span"); number.className = "beat-number"; number.textContent = String(index + 1).padStart(2, "0");
+            const copy = document.createElement("div"); copy.className = "beat-copy";
             const heading = document.createElement("h3"); heading.textContent = block.title || descriptor.title;
-            const text = document.createElement("p"); text.textContent = block.text || "";
-            card.append(badge, heading, text); lessonContent.appendChild(card);
+            copy.appendChild(heading);
+
+            if (block.kind === "formula") {
+                const display = document.createElement("div"); display.className = "formula-display"; display.textContent = block.text || ""; copy.appendChild(display);
+                const note = document.createElement("p"); note.className = "beat-note"; note.textContent = "Не заучивай символы отдельно: сначала свяжи каждый из них с тем, что происходит в задаче."; copy.appendChild(note);
+            } else if (block.kind === "method") {
+                const list = document.createElement("ol"); list.className = "method-steps";
+                String(block.text || "").split(/(?=\d+\.\s)/).map(item => item.replace(/^\d+\.\s*/, "").trim()).filter(Boolean).forEach(item => { const li=document.createElement("li");li.textContent=item;list.appendChild(li); });
+                copy.appendChild(list);
+            } else if (block.kind === "example") {
+                const board = document.createElement("div"); board.className = "example-board";
+                const description = document.createElement("p"); description.className = "example-situation"; description.textContent = block.text || ""; board.appendChild(description);
+                const calculation = (block.text || "").match(/(?:\d+\s*[\/×*]\s*\d+\s*=\s*[\d.,]+|[A-Za-zА-Яа-я]\([^)]*\)\s*=\s*[^.]+)/);
+                if (calculation) { const result=document.createElement("div");result.className="example-calculation";const label=document.createElement("span");label.textContent="Считаем";const equation=document.createElement("strong");equation.textContent=calculation[0];result.append(label,equation);board.appendChild(result); }
+                const insight = document.createElement("p"); insight.className = "example-insight"; insight.textContent = "Теперь объясни ответ обычными словами: что именно означает полученное число в условии?"; board.appendChild(insight);
+                copy.appendChild(board);
+            } else {
+                const text = document.createElement("p"); text.className = "beat-text"; text.textContent = block.text || ""; copy.appendChild(text);
+            }
+            chapter.append(number, copy); lessonContent.appendChild(chapter);
         });
-        lessonVisual.dataset.visualKind = visualKind;
-        renderDiagram(lessonVisual, visualKind, "Наглядная карта темы", "Схема помогает увидеть связи. Она иллюстрирует идею, а числа в задаче бери из условия.");
+        renderLessonIllustration(visualKind);
+        setupArcade(visualKind);
+    }
+
+    function renderLessonIllustration(kind) {
+        const block = lessonContent.querySelector(".lesson-beat.is-visual .beat-copy");
+        if (!block) return;
+        const visual = document.createElement("div"); visual.className = "lesson-illustration";
+        const svg = svgNode("svg", { viewBox: "0 0 560 220", role: "img", "aria-label": "Наглядная схема к уроку" });
+        if (kind === "tree") {
+            [[80,110,220,60],[80,110,220,160],[220,60,390,35],[220,60,390,85],[220,160,390,135],[220,160,390,185]].forEach(([x1,y1,x2,y2]) => svg.appendChild(svgNode("path", { d:`M${x1} ${y1}L${x2} ${y2}`, class:"illustration-line" })));
+            [[80,110,"Старт"],[220,60,"выбор A"],[220,160,"выбор B"],[390,35,"1"],[390,85,"2"],[390,135,"3"],[390,185,"4"]].forEach(([x,y,t])=>{svg.appendChild(svgNode("circle",{cx:x,cy:y,r:25,class:"illustration-node"}));svg.appendChild(svgNode("text",{x,y:Number(y)+4,"text-anchor":"middle",class:"illustration-text"},t));});
+        } else if (kind === "chart") {
+            svg.appendChild(svgNode("path",{d:"M45 185H530M45 25V185",class:"illustration-axis"}));
+            const values=[142,130,145,104,119,85,104,66,79,50,63,42,52,38];
+            const points=values.map((v,i)=>`${i?"L":"M"} ${50+i*36} ${v}`).join(" ");
+            svg.appendChild(svgNode("path",{d:points,class:"illustration-curve"}));svg.appendChild(svgNode("path",{d:"M45 105H530",class:"illustration-average"}));
+            svg.appendChild(svgNode("text",{x:510,y:97,"text-anchor":"end",class:"illustration-text"},"ориентир модели"));
+        } else if (kind === "table") {
+            [[70,44,"Событие A"],[250,44,"Не A"],[70,112,"Условие B"],[250,112,"Не B"]].forEach(([x,y,label],i)=>{svg.appendChild(svgNode("rect",{x,y,width:160,height:52,rx:14,class:i===0?"illustration-cell is-highlight":"illustration-cell"}));svg.appendChild(svgNode("text",{x:Number(x)+80,y:Number(y)+31,"text-anchor":"middle",class:"illustration-text"},label));});
+        } else {
+            const labels=["все исходы","подходящие","вероятность"];
+            labels.forEach((label,i)=>{const x=22+i*182;svg.appendChild(svgNode("rect",{x,y:77,width:150,height:68,rx:18,class:i===1?"illustration-node is-highlight":"illustration-node"}));svg.appendChild(svgNode("text",{x:x+75,y:118,"text-anchor":"middle",class:"illustration-text"},label));if(i<2)svg.appendChild(svgNode("path",{d:`M${x+153} 111h24m-8 -8 8 8 -8 8`,class:"illustration-line"}));});
+        }
+        visual.appendChild(svg); block.appendChild(visual);
+    }
+
+    const arcadeSets = {
+        probability: [
+            { q:"Справедливую монету подбросили один раз. Каков шанс орла?", options:["1/4","1/2","3/4"], answer:"1/2", why:"У монеты два равновозможных исхода, подходит один: 1/2." },
+            { q:"На кубике сколько чётных граней из шести?", options:["2 из 6","3 из 6","5 из 6"], answer:"3 из 6", why:"Подходят числа 2, 4 и 6 — три грани из шести." }
+        ],
+        chart: [
+            { q:"Зачем на графике частоты проводят линию P(A)=0,5?", options:["Это ориентир модели","Это гарантированный результат каждого броска","Это число всех опытов"], answer:"Это ориентир модели", why:"Отдельные серии колеблются, а линия показывает теоретическую вероятность." },
+            { q:"Что обычно видно при увеличении числа опытов?", options:["Частота чаще держится ближе к модели","Частота всегда становится ровно 0,5","Исходы перестают быть случайными"], answer:"Частота чаще держится ближе к модели", why:"Колебания остаются, но их относительный масштаб обычно уменьшается." }
+        ],
+        tree: [
+            { q:"Есть 3 футболки и 2 пары брюк. Сколько разных комплектов?", options:["5","6","9"], answer:"6", why:"Для каждой из трёх футболок подходят обе пары: 3 × 2 = 6." },
+            { q:"Выбираем председателя и заместителя из 4 человек. Важен ли порядок?", options:["Да, роли разные","Нет, это одна команда","Только если людей больше пяти"], answer:"Да, роли разные", why:"Перестановка людей меняет назначение, потому что должности различаются." }
+        ],
+        table: [
+            { q:"Из 20 студентов 5 изучают оба языка. Какую долю составляет эта группа?", options:["1/4","1/2","3/4"], answer:"1/4", why:"Нужную часть делим на всю группу: 5/20 = 1/4." },
+            { q:"Если известно условие B, какую часть таблицы рассматриваем?", options:["Только группу B","Всю таблицу без изменений","Только строку итога"], answer:"Только группу B", why:"Условие ограничивает пространство до случаев, где B уже произошло." }
+        ],
+        steps: [
+            { q:"На кубике выпало чётное число. Сколько исходов подходят?", options:["2","3","4"], answer:"3", why:"Чётные грани — 2, 4 и 6." },
+            { q:"Как лучше округлять результат?", options:["После подстановки и вычислений","До выбора формулы","Всегда сразу до целого"], answer:"После подстановки и вычислений", why:"Раннее округление может накопить ошибку." }
+        ]
+    };
+    let arcadeRound = 0, arcadePoints = 0, activeArcade = null;
+    function setupArcade(kind) {
+        const rounds = arcadeSets[kind] || arcadeSets.steps;
+        arcadeRound = 0; arcadePoints = 0; arcadeScore.textContent = "0";
+        const render = () => {
+            activeArcade = rounds[arcadeRound % rounds.length]; arcadePrompt.textContent = activeArcade.q;
+            arcadeFeedback.textContent = "Выбери ответ — Квант проверит твою догадку."; arcadeFeedback.className = "arcade-feedback";
+            arcadeNext.hidden = true; arcadeOptions.replaceChildren();
+            activeArcade.options.forEach(option => { const button=document.createElement("button");button.type="button";button.className="arcade-option";button.textContent=option;button.addEventListener("click",()=>{
+                const correct=option===activeArcade.answer; if(correct){arcadePoints++;arcadeScore.textContent=String(arcadePoints);}
+                arcadeOptions.querySelectorAll("button").forEach(item=>{item.disabled=true;if(item.textContent===activeArcade.answer)item.classList.add("is-correct");else if(item===button&&!correct)item.classList.add("is-wrong");});
+                arcadeFeedback.textContent=`${correct?"Точно!":"Почти."} ${activeArcade.why}`;arcadeFeedback.classList.add(correct?"is-correct":"is-wrong");arcadeNext.hidden=false;
+                window.VariqCat?.say(correct?"Есть! Ты поймал(а) закономерность.":"Ничего, разберём. " + activeArcade.why,correct?"happy":"thinking");
+            });arcadeOptions.appendChild(button);});
+        };
+        arcadeNext.onclick=()=>{arcadeRound++;render();};render();
     }
 
     const svgNode = (name, attrs = {}, text = "") => {
@@ -294,7 +389,7 @@
             currentTask = task;
 
             taskPrompt.textContent = task.prompt;
-            renderDiagram(taskVisual, task.visualKind || lessonVisual.dataset.visualKind || "steps", "Схема перед решением", "Отметь известные данные, найди нужную связь и только потом считай.");
+            renderDiagram(taskVisual, task.visualKind || "steps", "Схема перед решением", "Отметь известные данные, найди нужную связь и только потом считай.");
             taskProgress.textContent =
                 `Задание ${task.taskOrder} из ${task.taskCount}. ` +
                 `Попытка ${task.attempts + 1} из 3.`;
