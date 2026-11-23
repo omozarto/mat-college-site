@@ -3,6 +3,8 @@ namespace MathCollegeSiteBack.Contracts;
 public sealed record ExperimentRequest(int Trials);
 public sealed record DieFaceResult(int Face, int Count, decimal RelativeFrequency, decimal TheoreticalProbability);
 public sealed record DieExperimentResult(int Trials, IReadOnlyList<DieFaceResult> Faces);
+public sealed record DiceSumResult(int Trials, IReadOnlyList<DiceSumBin> Bins);
+public sealed record DiceSumBin(int Sum, int Count, decimal RelativeFrequency, decimal TheoreticalProbability);
 public sealed record CoinExperimentResult(
     int Trials,
     int Heads,

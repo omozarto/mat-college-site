@@ -30,7 +30,7 @@ public sealed class LessonsController(AppDbContext db) : ControllerBase
 
         return lesson is null ? NotFound() : Ok(new LessonDetails(lesson.Id, lesson.TopicId, lesson.Title,
             lesson.Summary, lesson.Content, await db.LessonTasks.CountAsync(x => x.LessonId == lesson.Id, cancellationToken),
-            LessonPresentation.BuildBlocks(lesson.Content), LessonPresentation.VisualKind(lesson.Content)));
+            LessonPresentation.BuildBlocks(lesson.Content, lesson.Summary), LessonPresentation.VisualKind(lesson.Content)));
     }
 
     [HttpPost("{lessonId:int}/start")]
@@ -92,7 +92,7 @@ public sealed class LessonsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync(cancellationToken);
         return CreatedAtAction(nameof(GetLesson), new { lessonId = lesson.Id },
             new LessonDetails(lesson.Id, lesson.TopicId, lesson.Title, lesson.Summary, lesson.Content, 0,
-                LessonPresentation.BuildBlocks(lesson.Content), LessonPresentation.VisualKind(lesson.Content)));
+                LessonPresentation.BuildBlocks(lesson.Content, lesson.Summary), LessonPresentation.VisualKind(lesson.Content)));
     }
 
     [HttpPut("{lessonId:int}")]
